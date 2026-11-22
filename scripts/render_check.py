@@ -25,7 +25,9 @@ agent eyes and a ruler: for each width and colour scheme it saves a screenshot
 --squint adds a blurred greyscale screenshot of the first two screens: if the
 hierarchy is not obvious there, it is not obvious. --fold captures only the
 first screen. Tall pages are saved as several screenshots of about 1600px
-(--tile) so each one can be read; open them all.
+(--tile) so each one can be read; open them all. Fixed bars (a phone's bottom
+navigation) appear once per tile in tiled screenshots; that is the capture,
+not the design.
 
 It talks only to the Chrome it starts, on 127.0.0.1, through the DevTools
 protocol; it sends nothing anywhere else. Needs Chrome, Chromium or Edge.
@@ -120,7 +122,8 @@ MEASURE = r"""
     if ((s.overflow === 'hidden' || s.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 3 && s.webkitLineClamp === 'none' && clipped.length < 6) clipped.push({el: label(el), text: txt.slice(0, 40)});
   }
   out.chars = chars;
-  out.families = Object.entries(fam).sort((a,b) => b[1]-a[1]).slice(0, 8).map(([name, n]) => ({name, share: n/chars, generic: generic.has(name.toLowerCase()), loaded: generic.has(name.toLowerCase()) ? true : fontOk(name)}));
+  const faceLoaded = name => { const n = name.toLowerCase(); try { if ([...document.fonts].some(f => f.family.replace(/["']/g, '').toLowerCase() === n && f.status === 'loaded')) return true; } catch (e) {} return fontOk(name); };
+  out.families = Object.entries(fam).sort((a,b) => b[1]-a[1]).slice(0, 8).map(([name, n]) => ({name, share: n/chars, generic: generic.has(name.toLowerCase()), loaded: generic.has(name.toLowerCase()) ? true : faceLoaded(name)}));
   out.sizes = Object.entries(sizes).map(([k, n]) => [parseFloat(k), n/chars]).filter(([k, sh]) => sh > 0.005 || k >= 20).sort((a,b) => a[0]-b[0]);
   out.weights = Object.entries(weights).map(([k, n]) => [k, n/chars]).sort((a,b) => b[1]-a[1]);
   out.textColors = Object.entries(colors).sort((a,b) => b[1]-a[1]).slice(0, 12).map(([k, n]) => [k, n/chars]);
@@ -154,7 +157,9 @@ MEASURE = r"""
   // targets
   const small = [], cramped = []; let controls = 0, foldControls = 0;
   for (const el of document.querySelectorAll('a[href], button, input:not([type=hidden]), select, textarea, [role=button], [role=link], [role=tab], [role=menuitem], [role=checkbox], [role=switch], summary')) {
-    if (!visible(el)) continue; controls++; const r = el.getBoundingClientRect(); if (r.top < H && r.bottom > 0) foldControls++;
+    if (!visible(el)) continue; controls++; let r = el.getBoundingClientRect(); if (r.top < H && r.bottom > 0) foldControls++;
+    const lab = el.closest('label') || (el.id && document.querySelector('label[for="' + CSS.escape(el.id) + '"]'));
+    if (lab) { const lr = lab.getBoundingClientRect(); if (lr.width * lr.height > r.width * r.height) r = lr; }
     const s = getComputedStyle(el); const inline = s.display === 'inline' && el.tagName === 'A' && el.parentElement && el.parentElement.innerText.trim().length > (el.innerText || '').trim().length + 10;
     if (inline) continue;
     if (r.width < 24 || r.height < 24) { if (small.length < 10) small.push(label(el) + ' ' + Math.round(r.width) + 'x' + Math.round(r.height)); }

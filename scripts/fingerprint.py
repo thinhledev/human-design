@@ -176,6 +176,8 @@ def extract(sources) -> dict:
                 continue
             if prop.startswith("--") and re.search(r"-(\d{2,3})$", prop):
                 continue  # ramp steps are raw material, not usage
+            if re.search(r"good|warn|bad|info|danger|success|error|alert|critical|positive|negative|caution", prop + " " + sel, re.I):
+                continue  # semantic colours are not the brand's accent
             if c >= 0.07 and 0.25 < L < 0.92:
                 chroma_hues[hue_name(h, c, L)] += 1
             elif c >= 0.004:
@@ -301,7 +303,7 @@ def from_render(path: str) -> dict:
         col = parse_color(hexv)
         L, c, h = srgb_to_oklch(*col[:3])
         if i == 0:
-            ink = hue_name(h, c, L) if c >= 0.012 else "neutral"
+            ink = hue_name(h, c, L) if c >= 0.02 else "neutral"
         elif c >= 0.07:
             hues[hue_name(h, c, L)] += share
     for hexv in f.get("fills", []):

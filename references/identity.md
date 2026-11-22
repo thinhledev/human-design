@@ -139,6 +139,9 @@ Skip this when the project already has an identity.
 
 ## 8. Taste calibration (optional, ten minutes)
 
+`~/.human-design/taste.md`, when it exists, is the result of this calibration
+for the owner: read it before every brief and aim inside its range.
+
 When the owner cannot yet say what they want, show instead of asking:
 
 1. Pick six to eight references from different traditions (`sources.md` lists a studied set with what makes each one work).

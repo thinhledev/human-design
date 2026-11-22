@@ -43,6 +43,8 @@ STARTER = {
         "chroma": "values above what sRGB can show are reduced automatically, so a strong yellow or lime may be set high",
         "shadow": "none, hairline, soft or hard",
         "deliberate": "tell ids from slop_check.py that are real decisions, each with a reason that names the subject",
+        "color.focus": "\"ink\" to draw focus rings in the text colour, when the accent is not the action colour",
+        "color.semantic": "hues for good, warn, bad, info; move warn away from the accent if they are close (a yellow accent and an amber warning)",
     },
     "signature": "The one deliberate, memorable choice and why it belongs to this subject.",
     "refusals": ["Three things this design will not use, each with its reason."],
@@ -165,6 +167,8 @@ def roles(spec, mode):
     on = white if wcag_contrast(white, r["accent"]["rgb"]) >= wcag_contrast(black, r["accent"]["rgb"]) else black
     r["on-accent"] = {"hex": to_hex(on), "rgb": on, "L": 1.0 if on == white else 0.18, "C": 0, "H": 0}
     r["focus"] = r["accent-text"]
+    if spec["color"].get("focus") == "ink":  # when the accent is not the action colour
+        r["focus"] = r["text"]
     return r
 
 
@@ -357,6 +361,9 @@ def main(argv=None):
     ap.add_argument("--swift")
     ap.add_argument("--kotlin")
     a = ap.parse_args(argv)
+    if a.init in ("-", "/dev/stdout"):
+        print(json.dumps(STARTER, indent=2))
+        return 0
     if a.init:
         if os.path.exists(a.init):
             sys.exit(f"{a.init} exists; not overwriting.")

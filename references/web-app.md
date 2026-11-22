@@ -67,7 +67,7 @@ the state sheet before the screens.
 
 ## 8. Density, type and colour
 
-- Decide density from who uses it and for how long. Tools used all day: 13 to 14px text, compact rows, more on screen.
+- Decide density from who uses it, for how long, and where. Tools used all day at a desk: 13 to 14px text, compact rows, more on screen. Tablets in the field, gloves, daylight, standing at a bench: 17px text or more, 48px rows and targets, higher contrast, fewer columns.
 - Five to seven type sizes; weight and colour do most of the ranking.
 - The accent marks the primary action and the current selection, and little else. Most of a tool is neutral.
 - System font stacks are a legitimate, deliberate choice for tools; a chosen text face with good figures is the alternative. Either way it is written in DESIGN.md.
