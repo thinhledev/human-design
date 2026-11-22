@@ -200,14 +200,45 @@ def blend(fg, bg):
 
 
 def hue_name(h: float, c: float, L: float) -> str:
+    """Name an OKLCH hue. Pure sRGB red sits near 29 degrees, orange near 55, yellow near 100."""
     if c < 0.02:
         return "neutral"
-    for limit, name in ((20, "red"), (50, "orange"), (75, "amber"), (110, "yellow"), (135, "lime"), (165, "green"),
-                        (200, "teal"), (235, "cyan"), (265, "blue"), (290, "indigo"), (320, "purple"), (345, "pink"),
-                        (361, "red")):
+    h = h % 360
+    for limit, name in ((35, "red"), (65, "orange"), (90, "amber"), (112, "yellow"), (135, "lime"), (165, "green"),
+                        (200, "teal"), (235, "cyan"), (268, "blue"), (290, "indigo"), (320, "purple"), (345, "pink")):
         if h < limit:
             return name
     return "red"
+
+
+_VAR = re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)")
+_DARK_SEL = re.compile(r"""\[data-(theme|mode|color-scheme)\s*=\s*["']?dark|(^|[\s.:(])dark(\b|$)|\.theme-dark|\.dark-mode""", re.I)
+
+
+def resolve_vars(value: str, table: dict, depth: int = 0) -> str:
+    """Replace var(--x) with its value from a table of custom properties (fallbacks honoured)."""
+    if "var(" not in value or depth > 6:
+        return value
+    def sub(m):
+        got = table.get(m.group(1))
+        return got if got is not None else (m.group(2) or m.group(0))
+    out = _VAR.sub(sub, value)
+    return resolve_vars(out, table, depth + 1) if out != value else out
+
+
+def is_dark_context(selector: str, at_rule: str) -> bool:
+    """True for declarations that only apply in dark mode."""
+    return ("prefers-color-scheme" in at_rule and "dark" in at_rule) or bool(_DARK_SEL.search(selector))
+
+
+def size_px(value: str, base: float = 16.0):
+    """Font size in px from a plain length or the upper bound of clamp(); None otherwise."""
+    v = value.strip().lower()
+    m = re.match(r"clamp\((.+)\)$", v)
+    if m:
+        parts = [x.strip() for x in re.split(r",(?![^()]*\))", m.group(1))]
+        return length_px(parts[-1], base) if parts else None
+    return length_px(v, base)
 
 
 # ----------------------------------------------------------------- sources
@@ -254,6 +285,22 @@ def collect(paths, max_bytes: int = 1_500_000):
                     out.append(Source(f, fh.read()))
             except OSError:
                 continue
+    # follow local stylesheets linked from the pages, so a page checked alone still has its tokens
+    for src in list(out):
+        if src.ext not in (".html", ".htm"):
+            continue
+        for m in re.finditer(r"""<link[^>]+href=["']([^"'#?]+\.css)["']|@import\s+(?:url\()?["']([^"')]+\.css)["']""", src.text, re.I):
+            href = m.group(1) or m.group(2)
+            if re.match(r"^(?:[a-z]+:)?//", href):
+                continue
+            path = os.path.normpath(os.path.join(os.path.dirname(src.path), href))
+            if path not in seen and os.path.isfile(path):
+                seen.add(path)
+                try:
+                    with open(path, encoding="utf-8", errors="ignore") as fh:
+                        out.append(Source(path, fh.read()))
+                except OSError:
+                    pass
     return out
 
 
@@ -401,6 +448,12 @@ def family_of(prop: str, value: str) -> str:
         m = _FONT_SHORTHAND.search(value.strip())
         return first_family(m.group(1)) if m else ""
     return ""
+
+
+def font_shorthand_size(value: str):
+    """The size token of a `font:` shorthand, in px, or None."""
+    m = re.search(r"(?:^|\s)(\d*\.?\d+(?:px|rem|em|pt)|clamp\([^)]*(?:\([^)]*\)[^)]*)*\))(?:\s*/|\s)", value.strip() + " ")
+    return size_px(m.group(1)) if m else None
 
 
 def length_px(value: str, base: float = 16.0):

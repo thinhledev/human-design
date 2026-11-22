@@ -356,6 +356,8 @@ def _(d):
 @tell("layout-numbered-markers", "default", "weak", "01 / 02 / 03 markers on things that are not a sequence", "Number steps only when order matters to the reader.")
 def _(d):
     hits = d.find(r">\s*0[1-6]\s*<")
+    if d.find(r">\s*(0[7-9]|[1-9]\d)\s*<", limit=1):
+        return []  # a longer numbered list is a catalogue or an index, not three decorated steps
     return hits[:4] if len(hits) >= 3 else []
 
 
@@ -582,10 +584,20 @@ def _(d):
     return anim[:3] if len(anim) >= 4 and not handled else []
 
 
-@tell("dead-endless-animation", "dead", "weak", "Several endless decorative animations (pulse, bounce, float, spin)", "Ambient motion competes with content. Keep one at most, and only if it means something.")
+@tell("dead-endless-animation", "dead", "weak", "Several endless decorative animations (pulse, bounce, float, gradient)",
+      "Ambient motion competes with content. Keep one at most, and only if it means something. Spinners and skeleton sweeps do not count.")
 def _(d):
-    hits = d.cls(r"(?:^|:)animate-(pulse|bounce|ping|float|spin-slow|gradient|shimmer|marquee)$") + d.decl(r"animation(-iteration-count)?", r"infinite")
-    return hits[:4] if len(hits) >= 3 else []
+    work = re.compile(r"spin|sweep|skelet|load|progress|busy|shimmer", re.I)
+    names = {}
+    for s, _sel, prop, val, line, _at in d.decls:
+        if prop in ("animation", "animation-name") and ("infinite" in val or prop == "animation-name"):
+            name = next((t for t in re.split(r"[\s,]+", val) if re.fullmatch(r"[A-Za-z_][\w-]*", t)
+                         and t not in ("infinite", "linear", "ease", "ease-in", "ease-out", "ease-in-out", "alternate", "both", "forwards",
+                                       "backwards", "normal", "reverse", "running", "paused", "none")), "")
+            if name and not work.search(name) and "infinite" in val:
+                names.setdefault(name, (s.path, line, f"animation: {val[:50]}"))
+    hits = list(names.values()) + d.cls(r"(?:^|:)animate-(pulse|bounce|ping|float|spin-slow|gradient|marquee)$")
+    return hits[:4] if len(names) + len({h[2] for h in hits[len(names):]}) >= 3 else []
 
 
 @tell("dead-toy-motion", "dead", "weak", "Count-up numbers, typewriter headlines, bouncing or elastic easing",

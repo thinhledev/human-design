@@ -22,8 +22,10 @@ agent eyes and a ruler: for each width and colour scheme it saves a screenshot
   motion    animations that keep running under prefers-reduced-motion
   the fold  what the first screen shows: largest text, number of controls
 
---squint adds a blurred greyscale screenshot: if the hierarchy is not obvious
-there, it is not obvious. --fold captures only the first screen.
+--squint adds a blurred greyscale screenshot of the first two screens: if the
+hierarchy is not obvious there, it is not obvious. --fold captures only the
+first screen. Tall pages are saved as several screenshots of about 1600px
+(--tile) so each one can be read; open them all.
 
 It talks only to the Chrome it starts, on 127.0.0.1, through the DevTools
 protocol; it sends nothing anywhere else. Needs Chrome, Chromium or Edge.
@@ -70,7 +72,8 @@ MEASURE = r"""
   const hex = c => '#' + [0,1,2].map(i => Math.round(c[i]*255).toString(16).padStart(2,'0')).join('');
   const label = el => { let s = el.tagName.toLowerCase(); if (el.id) s += '#' + el.id;
     const c = (el.getAttribute('class') || '').trim().split(/\s+/).filter(Boolean).slice(0,2).join('.'); if (c) s += '.' + c; return s; };
-  const visible = el => { const r = el.getBoundingClientRect(); if (r.width < 1 || r.height < 1) return false;
+  const visible = el => { const r = el.getBoundingClientRect(); if (r.width < 2.5 || r.height < 2.5) return false;
+    if (r.right < 0 || r.bottom + scrollY < 0 || r.left > Math.max(W, document.documentElement.scrollWidth)) return false;
     const s = getComputedStyle(el); return s.visibility !== 'hidden' && s.display !== 'none' && parseFloat(s.opacity) > 0.05; };
   const bgOf = el => { let node = el, layers = [], image = false;
     while (node && node.nodeType === 1) { const s = getComputedStyle(node);
@@ -118,7 +121,7 @@ MEASURE = r"""
   }
   out.chars = chars;
   out.families = Object.entries(fam).sort((a,b) => b[1]-a[1]).slice(0, 8).map(([name, n]) => ({name, share: n/chars, generic: generic.has(name.toLowerCase()), loaded: generic.has(name.toLowerCase()) ? true : fontOk(name)}));
-  out.sizes = Object.entries(sizes).map(([k, n]) => [parseFloat(k), n/chars]).sort((a,b) => a[0]-b[0]);
+  out.sizes = Object.entries(sizes).map(([k, n]) => [parseFloat(k), n/chars]).filter(([k, sh]) => sh > 0.005 || k >= 20).sort((a,b) => a[0]-b[0]);
   out.weights = Object.entries(weights).map(([k, n]) => [k, n/chars]).sort((a,b) => b[1]-a[1]);
   out.textColors = Object.entries(colors).sort((a,b) => b[1]-a[1]).slice(0, 12).map(([k, n]) => [k, n/chars]);
   out.textColorCount = Object.keys(colors).length;
@@ -141,6 +144,9 @@ MEASURE = r"""
   out.spacing = {distinct: sp.length, offGrid: sp.filter(([k]) => k % 4 !== 0 && k > 2).sort((a,b) => b[1]-a[1]).slice(0, 8), offGridShare: sp.filter(([k]) => k % 4 !== 0 && k > 2).reduce((a, b) => a + b[1], 0) / spTotal};
   out.radii = Object.entries(radii).sort((a,b) => b[1]-a[1]).slice(0, 8); out.shadows = shadows.size; out.gradients = gradients; out.backdropBlur = blur; out.boxes = boxes;
   out.backgrounds = Object.entries(bgs).sort((a,b) => b[1]-a[1]).slice(0, 6).map(([k]) => k);
+  out.fills = out.backgrounds.slice();
+  { const b = rgba(getComputedStyle(document.body).backgroundColor), h = rgba(getComputedStyle(document.documentElement).backgroundColor);
+    out.pageBackground = hex(b[3] > 0.5 ? b : (h[3] > 0.5 ? h : [1,1,1,1])); }
   // overflow
   const sw = document.documentElement.scrollWidth; out.overflowX = sw > W + 1 ? sw - W : 0; out.overflowers = [];
   if (out.overflowX) for (const el of document.body.querySelectorAll('*')) { const r = el.getBoundingClientRect(); if (r.right > W + 1 && r.width > 0 && out.overflowers.length < 6 && visible(el)) { const s = getComputedStyle(el); if (s.position !== 'fixed') out.overflowers.push(label(el) + ' right=' + Math.round(r.right)); } }
@@ -162,10 +168,12 @@ MEASURE = r"""
   out.headings = {h1: hs.filter(x => x === 1).length, total: hs.length, skips: hs.filter((x, i) => i > 0 && x > hs[i-1] + 1).length};
   // the first screen
   let big = null; for (const el of seen) { const r = el.getBoundingClientRect(); if (r.top >= H || r.bottom <= 0) continue; const px = parseFloat(getComputedStyle(el).fontSize);
-    if (!big || px > big.size) big = {size: px, text: (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 80), el: label(el)}; }
+    if (!big || px > big.size) big = {size: px, text: (el.innerText || '').replace(/\s+/g, ' ').trim().slice(0, 80), el: label(el),
+      family: getComputedStyle(el).fontFamily.split(',')[0].trim().replace(/^["']|["']$/g, '')}; }
   out.fold = {largest: big, controls: foldControls};
   out.animations = document.getAnimations ? document.getAnimations().filter(a => a.playState === 'running').length : 0;
-  out.infinite = document.getAnimations ? document.getAnimations().filter(a => a.effect && a.effect.getTiming && a.effect.getTiming().iterations === Infinity).length : 0;
+  out.infinite = document.getAnimations ? [...new Set(document.getAnimations().filter(a => a.effect && a.effect.getTiming && a.effect.getTiming().iterations === Infinity)
+    .map(a => a.animationName || a.id || 'anon'))].filter(n => !/spin|sweep|skelet|load|progress|busy|shimmer|pulse-dot/i.test(n)).length : 0;
   out.title = document.title; out.lang = document.documentElement.lang || '';
   return JSON.stringify(out);
 })()
@@ -344,30 +352,44 @@ def capture(cdp, session, url, width, scheme, a, out_dir, stem):
     if "exceptionDetails" in res:
         raise RuntimeError("measurement failed: " + str(res["exceptionDetails"].get("text")))
     facts = json.loads(res["result"]["value"])
-    facts.update({"width": width, "scheme": scheme, "loaded": loaded})
+    facts.update({"width": width, "scheme": scheme, "loaded": loaded, "surface": a.surface})
     # animations that survive reduced motion
     cdp.call("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme", "value": scheme},
                                                           {"name": "prefers-reduced-motion", "value": "reduce"}]}, session)
     time.sleep(0.25)
     r2 = cdp.call("Runtime.evaluate", {"expression": "document.getAnimations ? document.getAnimations().filter(a => a.playState === 'running' "
-                                                     "&& a.effect && a.effect.getTiming().duration > 20).length : 0", "returnByValue": True}, session)
+                                                     "&& a.effect && a.effect.getTiming().duration > 20 && a.effect.getKeyframes().some(k => "
+                                                     "['transform','translate','scale','rotate','left','top','right','bottom','width','height','margin',"
+                                                     "'backgroundPosition','offsetDistance'].some(p => p in k))).length : 0", "returnByValue": True}, session)
     facts["animationsUnderReducedMotion"] = r2.get("result", {}).get("value", 0)
     cdp.call("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme", "value": scheme},
                                                           {"name": "prefers-reduced-motion", "value": "no-preference"}]}, session)
     shots = []
     if out_dir:
-        full_h = height if a.fold else min(int(facts.get("pageHeight") or height), a.max_height)
-        clip = {"x": 0, "y": 0, "width": width, "height": full_h, "scale": 1}
-        png = cdp.call("Page.captureScreenshot", {"format": "png", "clip": clip, "captureBeyondViewport": True}, session, timeout=60)
-        path = os.path.join(out_dir, f"{stem}-{width}-{scheme}.png")
-        with open(path, "wb") as fh:
-            fh.write(base64.b64decode(png["data"]))
-        shots.append(path)
+        page_h = int(facts.get("pageHeight") or height)
+        full_h = height if a.fold else min(page_h, a.max_height)
+        if page_h > a.max_height and not a.fold:
+            facts["truncated"] = f"page is {page_h}px tall; screenshots stop at {a.max_height}px (raise --max-height)"
+        tile = a.tile if (a.tile and not a.fold and full_h > a.tile * 1.5) else full_h
+        y, n = 0, 0
+        while y < full_h:
+            h = min(tile, full_h - y)
+            if h < 200 and n:
+                break
+            n += 1
+            clip = {"x": 0, "y": y, "width": width, "height": h, "scale": 1}
+            png = cdp.call("Page.captureScreenshot", {"format": "png", "clip": clip, "captureBeyondViewport": True}, session, timeout=60)
+            suffix = f"-{n}" if tile < full_h else ""
+            path = os.path.join(out_dir, f"{stem}-{width}-{scheme}{suffix}.png")
+            with open(path, "wb") as fh:
+                fh.write(base64.b64decode(png["data"]))
+            shots.append(path)
+            y += h
         if a.squint:
             cdp.call("Runtime.evaluate", {"expression": "document.documentElement.style.filter='blur(7px) grayscale(1)'"}, session)
             time.sleep(0.15)
-            png = cdp.call("Page.captureScreenshot", {"format": "png", "clip": dict(clip, height=min(full_h, height * 2)),
-                                                      "captureBeyondViewport": True}, session, timeout=60)
+            clip = {"x": 0, "y": 0, "width": width, "height": min(full_h, height * 2), "scale": 1}
+            png = cdp.call("Page.captureScreenshot", {"format": "png", "clip": clip, "captureBeyondViewport": True}, session, timeout=60)
             path = os.path.join(out_dir, f"{stem}-{width}-{scheme}-squint.png")
             with open(path, "wb") as fh:
                 fh.write(base64.b64decode(png["data"]))
@@ -386,7 +408,7 @@ def findings(f):
     real = [x for x in f["families"] if x["share"] > 0.02]
     if len(real) > 3:
         out.append(("warn", f"{len(real)} font families carry text ({', '.join(x['name'] for x in real)}). Two, or three with a mono, is the usual limit."))
-    sizes = [s for s, share in f["sizes"] if share > 0.005]
+    sizes = [s for s, _share in f["sizes"]]
     limit = 9 if f["width"] > 600 else 8
     if len(sizes) > limit:
         out.append(("warn", f"{len(sizes)} font sizes in use ({', '.join(f'{s:g}' for s in sizes)}px). A scale of 6 to 8 steps reads as a system; more reads as accident."))
@@ -456,11 +478,15 @@ def findings(f):
     if h["skips"]:
         out.append(("info", f"Heading levels skip {h['skips']} time(s)."))
     if f["animationsUnderReducedMotion"]:
-        out.append(("warn", f"{f['animationsUnderReducedMotion']} animations keep running under prefers-reduced-motion."))
+        out.append(("warn", f"{f['animationsUnderReducedMotion']} animations keep moving under prefers-reduced-motion "
+                            "(opacity-only fades are not counted). Remove the movement; keep the meaning."))
     if f["infinite"] >= 3:
-        out.append(("info", f"{f['infinite']} endless animations. Ambient motion competes with content; keep one at most."))
-    if f["fold"]["controls"] > 12 and f["width"] > 600 and f["fold"]["largest"] and f["fold"]["largest"]["size"] >= 40:
-        out.append(("info", f"{f['fold']['controls']} controls on the first screen of what looks like a marketing page. What is the one action?"))
+        out.append(("info", f"{f['infinite']} different endless animations besides spinners and skeletons. Ambient motion competes "
+                            "with content; keep one at most."))
+    if f.get("surface") == "marketing" and f["fold"]["controls"] > 12 and f["width"] > 600:
+        out.append(("info", f"{f['fold']['controls']} controls on the first screen of a marketing page. What is the one action?"))
+    if f.get("truncated"):
+        out.append(("info", "Screenshots are cut short: " + f["truncated"] + "."))
     if not f["loaded"]:
         out.append(("warn", "The page did not fire its load event in time; results may be partial."))
     return out
@@ -472,7 +498,7 @@ def render(f, out):
     if f["screenshots"]:
         o += ["Screenshots: " + ", ".join(f"`{p}`" for p in f["screenshots"]), ""]
     fams = ", ".join(f"{x['name']} {x['share']:.0%}" + ("" if x["loaded"] else " (NOT LOADED)") for x in f["families"] if x["share"] > 0.01)
-    sizes = ", ".join(f"{s:g}" for s, share in f["sizes"] if share > 0.005)
+    sizes = ", ".join(f"{s:g}" for s, _share in f["sizes"])
     big = f["fold"]["largest"]
     o += [f"- Type: {fams}. Sizes (px): {sizes}. Weights: " + ", ".join(k for k, share in f["weights"] if share > 0.01) + ".",
           f"- Text colours: {f['textColorCount']} ({', '.join(k for k, _s in f['textColors'][:6])}). Backgrounds: {', '.join(f['backgrounds'][:5])}.",
@@ -495,6 +521,8 @@ def main(argv=None):
     ap.add_argument("--widths", default="390,1440", help="comma-separated viewport widths, default 390,1440")
     ap.add_argument("--schemes", default="light", help="light, dark or light,dark")
     ap.add_argument("--fold", action="store_true", help="capture only the first screen")
+    ap.add_argument("--surface", choices=["marketing", "app", "desktop", "mobile", "store"], help="what the page is; tunes a few findings")
+    ap.add_argument("--tile", type=int, default=1600, help="split tall pages into screenshots of about this many px (0 = one image)")
     ap.add_argument("--squint", action="store_true", help="also save a blurred greyscale screenshot")
     ap.add_argument("--scale", type=float, default=1.0, help="device scale factor for screenshots (default 1)")
     ap.add_argument("--max-height", type=int, default=6000, help="tallest full-page screenshot in px")

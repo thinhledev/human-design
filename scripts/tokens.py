@@ -34,6 +34,19 @@ CURVE = [0.18, 0.32, 0.55, 0.78, 0.95, 1.0, 0.97, 0.88, 0.76, 0.62, 0.48]
 
 STARTER = {
     "_readme": "Every value here is a decision from the brief. Replace all of them; see references/identity.md.",
+    "_options": {
+        "color.neutral.bg_lightness": "lightness of the light ground, 0 to 1 (default 0.985); bg_lightness_dark for the dark one (default 0.2)",
+        "color.ink": "optional {hue, chroma} for text when it should differ from the neutral hue",
+        "color.accent.lightness_dark": "accent lightness in dark mode (default: lighter than light mode)",
+        "color.second": "optional second accent {hue, chroma, lightness}; emits a ramp and the roles second and second-text",
+        "color.modes": "[\"light\"], [\"dark\"] or both; list the primary one first",
+        "chroma": "values above what sRGB can show are reduced automatically, so a strong yellow or lime may be set high",
+        "shadow": "none, hairline, soft or hard",
+        "deliberate": "tell ids from slop_check.py that are real decisions, each with a reason that names the subject",
+    },
+    "signature": "The one deliberate, memorable choice and why it belongs to this subject.",
+    "refusals": ["Three things this design will not use, each with its reason."],
+    "deliberate": {},
     "name": "PROJECT NAME",
     "subject": "One sentence: what this is, for whom, and the one job of the product.",
     "type": {
@@ -101,6 +114,8 @@ def roles(spec, mode):
     nh, nc = n["hue"], n["chroma"]
     ah, ac, aL = a["hue"], a["chroma"], a["lightness"]
     sem = spec["color"].get("semantic", {})
+    ink = spec["color"].get("ink") or {"hue": nh, "chroma": min(0.03, nc * 1.5)}
+    second = spec["color"].get("second")
     r = {}
     if mode == "light":
         r["bg"] = pick(n.get("bg_lightness", 0.985), nc * 0.5, nh)
@@ -108,15 +123,20 @@ def roles(spec, mode):
         r["sunken"] = pick(r["bg"]["L"] - 0.03, nc * 0.7, nh)
         r["border"] = pick(r["bg"]["L"] - 0.09, nc, nh)
         r["border-strong"] = ensure(pick(r["bg"]["L"] - 0.36, nc, nh), r["bg"], 3.0, nh, nc, darker=True)
-        r["text"] = pick(0.21, min(0.03, nc * 1.5), nh)
-        r["text-muted"] = ensure(pick(0.48, nc * 1.2, nh), r["bg"], 4.5, nh, nc * 1.2, darker=True)
-        r["text-subtle"] = ensure(pick(0.6, nc, nh), r["bg"], 3.0, nh, nc, darker=True)
+        r["text"] = pick(ink.get("lightness", 0.21), ink["chroma"], ink["hue"])
+        low = r["sunken"]  # the darkest light surface: text must hold on it too
+        r["text-muted"] = ensure(pick(0.48, nc * 1.2, nh), low, 4.5, nh, nc * 1.2, darker=True)
+        r["text-subtle"] = ensure(pick(0.6, nc, nh), low, 3.0, nh, nc, darker=True)
         r["accent"] = pick(aL, ac, ah)
         r["accent-hover"] = pick(max(0.1, aL - 0.06), ac, ah)
         r["accent-tint"] = pick(0.95, ac * 0.25, ah)
-        r["accent-text"] = ensure(pick(min(aL, 0.5), ac, ah), r["bg"], 4.5, ah, ac, darker=True)
+        r["accent-text"] = ensure(pick(min(aL, 0.5), ac, ah), low, 4.5, ah, ac, darker=True)
+        if second:
+            r["second"] = pick(second.get("lightness", 0.6), second["chroma"], second["hue"])
+            r["second-text"] = ensure(pick(min(second.get("lightness", 0.6), 0.5), second["chroma"], second["hue"]), low, 4.5,
+                                      second["hue"], second["chroma"], darker=True)
         for name, hue in sem.items():
-            r[name] = ensure(pick(0.52, 0.15, hue), r["bg"], 4.5, hue, 0.15, darker=True)
+            r[name] = ensure(pick(0.52, 0.15, hue), low, 4.5, hue, 0.15, darker=True)
             r[name + "-tint"] = pick(0.95, 0.04, hue)
     else:
         r["bg"] = pick(n.get("bg_lightness_dark", 0.2), min(nc, 0.02), nh)
@@ -124,16 +144,21 @@ def roles(spec, mode):
         r["sunken"] = pick(max(0.08, r["bg"]["L"] - 0.03), min(nc, 0.018), nh)
         r["border"] = pick(r["bg"]["L"] + 0.11, min(nc, 0.025), nh)
         r["border-strong"] = ensure(pick(r["bg"]["L"] + 0.34, min(nc, 0.03), nh), r["bg"], 3.0, nh, min(nc, 0.03), darker=False)
-        r["text"] = pick(0.94, min(nc, 0.015), nh)
-        r["text-muted"] = ensure(pick(0.72, min(nc, 0.02), nh), r["bg"], 4.5, nh, min(nc, 0.02), darker=False)
-        r["text-subtle"] = ensure(pick(0.58, min(nc, 0.02), nh), r["bg"], 3.0, nh, min(nc, 0.02), darker=False)
+        r["text"] = pick(0.94, min(ink["chroma"], 0.02), ink["hue"])
+        high = r["surface"]  # the lightest dark surface
+        r["text-muted"] = ensure(pick(0.72, min(nc, 0.02), nh), high, 4.5, nh, min(nc, 0.02), darker=False)
+        r["text-subtle"] = ensure(pick(0.58, min(nc, 0.02), nh), high, 3.0, nh, min(nc, 0.02), darker=False)
         dark_l = a.get("lightness_dark", min(0.8, max(aL + 0.12, 0.68)))
         r["accent"] = pick(dark_l, ac * 0.9, ah)
         r["accent-hover"] = pick(min(0.92, dark_l + 0.05), ac * 0.9, ah)
         r["accent-tint"] = pick(0.27, ac * 0.3, ah)
-        r["accent-text"] = ensure(pick(dark_l, ac * 0.9, ah), r["bg"], 4.5, ah, ac * 0.9, darker=False)
+        r["accent-text"] = ensure(pick(dark_l, ac * 0.9, ah), high, 4.5, ah, ac * 0.9, darker=False)
+        if second:
+            sl = second.get("lightness_dark", min(0.82, max(second.get("lightness", 0.6) + 0.1, 0.7)))
+            r["second"] = pick(sl, second["chroma"] * 0.9, second["hue"])
+            r["second-text"] = ensure(pick(sl, second["chroma"] * 0.9, second["hue"]), r["bg"], 4.5, second["hue"], second["chroma"] * 0.9, darker=False)
         for name, hue in sem.items():
-            r[name] = ensure(pick(0.75, 0.13, hue), r["bg"], 4.5, hue, 0.13, darker=False)
+            r[name] = ensure(pick(0.75, 0.13, hue), high, 4.5, hue, 0.13, darker=False)
             r[name + "-tint"] = pick(0.27, 0.05, hue)
     white, black = (1.0, 1.0, 1.0), (0.07, 0.07, 0.07)
     on = white if wcag_contrast(white, r["accent"]["rgb"]) >= wcag_contrast(black, r["accent"]["rgb"]) else black
@@ -165,12 +190,12 @@ def type_tokens(spec):
             track = -0.01
         elif px <= 12:
             track = 0.01
-        value = f"{px / base:.4g}rem"
+        value = f"{round(px / base, 5):g}rem"
         if fluid_from and px >= fluid_from:
             lo = max(sizes[max(0, i - 2)], round(px * 0.68))
             slope = (px - lo) / (1280 - 360) * 100
             icpt = (lo - slope * 3.6) / base
-            value = f"clamp({lo / base:.4g}rem, {icpt:.4g}rem + {slope:.3g}vw, {px / base:.4g}rem)"
+            value = f"clamp({round(lo / base, 5):g}rem, {icpt:.4g}rem + {slope:.3g}vw, {round(px / base, 5):g}rem)"
         out.append({"name": f"text-{i}", "px": px, "value": value, "line": round(lh, 3), "track": track})
     return out
 
@@ -222,7 +247,7 @@ def css_vars(data, selector_light=":root"):
     for t in data["type"]:
         o += [f"  --{t['name']}: {t['value']};", f"  --{t['name']}-line: {t['line']};", f"  --{t['name']}-track: {t['track']}em;"]
     o.append(f"  --measure: {data['measure']}ch;")
-    o += [f"  --space-{k}: {v / 16:.4g}rem;" for k, v in data["space"].items()]
+    o += [f"  --space-{k}: {round(v / 16, 5):g}rem;" for k, v in data["space"].items()]
     o += [f"  --radius-{k}: {v}px;" for k, v in data["radius"].items()]
     o += [f"  --{k}: {v}{'ms' if isinstance(v, (int, float)) else ''};".replace("--ease", "--ease-out")
           for k, v in ((f"dur-{k}" if k != "ease" else "ease", v) for k, v in data["motion"].items())]

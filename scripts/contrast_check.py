@@ -27,7 +27,7 @@ import sys
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from design_lib import apca, blend, fit_oklch, md_table, parse_color, srgb_to_oklch, to_hex, wcag_contrast  # noqa: E402
 
-TEXT_LIKE = re.compile(r"(text|fg|foreground|ink|accent-text|muted|subtle|link|good|warn|bad|info|danger|success|error)(?!.*(tint|bg))", re.I)
+TEXT_LIKE = re.compile(r"(text|fg|foreground|ink|accent-text|muted|subtle|link|good|warn|bad|info|danger|success|error|second-text)(?!.*(tint|bg))", re.I)
 GROUND_LIKE = re.compile(r"(^|-)(bg|background|surface|ground|paper|canvas|sunken|card|panel|tint)($|-)", re.I)
 
 
@@ -102,7 +102,7 @@ def main(argv=None):
     a = ap.parse_args(argv)
     rows, failed = [], 0
 
-    def add(label, fg_raw, bg_raw):
+    def add(label, fg_raw, bg_raw, non_text=False):
         nonlocal failed
         fg, bg = parse_color(fg_raw), parse_color(bg_raw)
         if not fg or not bg:
@@ -112,6 +112,8 @@ def main(argv=None):
         fg3 = blend(fg, bg3)
         ratio = wcag_contrast(fg3, bg3)
         v, need = verdict(ratio, a.size, a.weight)
+        if non_text:  # placeholders, disabled text, borders and focus rings need 3:1
+            v, need = ("ok for non-text (3:1)" if ratio >= 3 else "FAIL"), 3.0
         failed += v in ("FAIL", "controls only")
         hint = ""
         if a.fix and v in ("FAIL", "controls only"):
@@ -133,13 +135,15 @@ def main(argv=None):
                 if fg not in table or bg not in table:
                     rows.append([f"{mode}: {fg} on {bg}", "?", "?", "-", "-", "token not found", ""])
                     continue
-                add(f"{mode}: {fg} on {bg}", resolve(table[fg], table), resolve(table[bg], table))
+                add(f"{mode}: {fg} on {bg}", resolve(table[fg], table), resolve(table[bg], table),
+                    non_text=bool(re.search(r"subtle|placeholder|disabled|border|focus|ring|line", fg)))
     elif len(a.colors) == 2:
         add("pair", a.colors[0], a.colors[1])
     else:
         ap.error("give two colours, or --css FILE")
     print(md_table(["pair", "foreground", "background", "WCAG", "APCA Lc", f"at {a.size:g}px/{a.weight}", "passing foreground" if a.fix else ""], rows))
-    print(f"\n{failed} pair(s) below AA for text at this size." if failed else "\nAll pairs pass AA for text at this size.")
+    print(f"\n{failed} pair(s) below their minimum." if failed else "\nAll pairs pass (4.5:1 for text at this size; 3:1 for subtle, "
+          "border and focus tokens, which are not body text).")
     return 2 if failed else 0
 
 

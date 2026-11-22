@@ -5,7 +5,8 @@ looks that AI tools converge on.
 Usage:
   python3 fingerprint.py src/                         # this project's fingerprint and its nearest default look
   python3 fingerprint.py src/ --save acme             # remember it under a name
-  python3 fingerprint.py src/ --against               # compare with every saved project
+  python3 fingerprint.py src/ --against               # compare with every saved project (reads only)
+  python3 fingerprint.py --taken                      # what saved projects already use; read before choosing
   python3 fingerprint.py --compare projA/src projB/src [projC/src]
   python3 fingerprint.py mockup.html --json
 
@@ -17,7 +18,16 @@ glass. Two projects by a designer on autopilot share most of it.
 
 Saved fingerprints live in ~/.human-design/fingerprints (or --registry DIR) so
 that a design made in one repository can be checked against the others. Only
-the fingerprint is stored: no source code, no content.
+the fingerprint is stored: no source code, no content. --against only reads
+the registry; nothing is written without --save.
+
+Two rules apply between unrelated projects whatever the score: they may not
+share a text or display typeface, and they may not share both ground and accent
+hue. Pass --same-brand when the projects belong to one brand.
+
+Light-mode declarations are read; custom properties (tokens) are resolved. Give
+each design its own files: one HTML or CSS file per direction when comparing
+directions.
 
 It reads source files (HTML, CSS, JSX or TSX, Vue, Svelte, Astro, Tailwind
 classes). For a rendered page, pass the JSON from render_check.py --json with
@@ -34,8 +44,8 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import (class_tokens, collect, declarations, family_of, font_mentions, hue_name, length_px, md_table,  # noqa: E402
-                        parse_color, srgb_to_oklch)
+from design_lib import (class_tokens, collect, declarations, family_of, font_mentions, font_shorthand_size, hue_name,  # noqa: E402
+                        is_dark_context, length_px, md_table, parse_color, resolve_vars, size_px, srgb_to_oklch)
 
 GENERIC = {"serif", "sans-serif", "monospace", "system-ui", "ui-sans-serif", "ui-serif", "ui-monospace", "ui-rounded",
            "-apple-system", "blinkmacsystemfont", "inherit", "segoe ui", "roboto", "helvetica neue", "helvetica", "arial",
@@ -71,6 +81,9 @@ DEFAULT_LOOKS = {
     "glass and glow": {
         "fonts": ["inter", "sf pro display", "(system)", "plus jakarta sans", "outfit", "sora"], "ground": ["near-black", "white"],
         "accent": ["blue", "purple", "indigo", "cyan", "pink"], "radius": ["16+", "pill"], "glass": [True], "gradient": [True]},
+    "sage paper and pine ink (third-generation default)": {
+        "ground": ["sage"], "ink": ["green", "teal", "lime"], "accent": ["indigo", "blue", "purple"], "neutral": ["cool", "warm"],
+        "radius": ["0", "1-3", "4-6"], "shadow": ["none", "hairline"]},
     "techno mono (space grotesk and mono labels)": {
         "fonts": ["space grotesk", "space mono", "jetbrains mono", "ibm plex mono", "geist mono", "dm mono"],
         "ground": ["white", "cream", "near-black"], "radius": ["0", "1-3"], "shadow": ["none", "hard"], "mono_labels": [True]},
@@ -78,8 +91,9 @@ DEFAULT_LOOKS = {
 # Traits a design must share before it can be called that look; without them the score is capped.
 MUST = {"framework default (shadcn or Tailwind starter)": ["fonts"], "purple gradient SaaS": ["gradient", "accent"],
         "cream editorial (second-generation default)": ["ground", "fonts"], "dark with a neon accent": ["ground", "accent"],
-        "glass and glow": ["glass"], "techno mono (space grotesk and mono labels)": ["fonts"]}
-WEIGHTS = {"fonts": 0.30, "accent": 0.17, "ground": 0.12, "neutral": 0.06, "radius": 0.10, "shadow": 0.06, "ratio": 0.05,
+        "glass and glow": ["glass"], "techno mono (space grotesk and mono labels)": ["fonts"],
+        "sage paper and pine ink (third-generation default)": ["ground", "accent"]}
+WEIGHTS = {"fonts": 0.30, "accent": 0.17, "ground": 0.12, "ink": 0.06, "neutral": 0.05, "radius": 0.10, "shadow": 0.06, "ratio": 0.05,
            "centred": 0.05, "gradient": 0.04, "glass": 0.03, "mono_labels": 0.02}
 
 
@@ -97,16 +111,35 @@ def ground_of(rgb) -> str:
         return "near-black"
     if L < 0.6:
         return "mid"
-    if L > 0.985 and c < 0.004:
-        return "white"
-    if c >= 0.006 and 40 <= h <= 110:
+    if c < 0.006:
+        return "white" if L > 0.975 else "grey"
+    if 40 <= h < 110:
         return "cream"
-    return "tinted" if c >= 0.012 else ("white" if L > 0.965 else "grey")
+    if 110 <= h < 175:
+        return "sage"
+    if 175 <= h < 290:
+        return "cool"
+    return "blush"
+
+
+GROUND_SEL = re.compile(r"(^|[\s,>])(body|html|:root|main)\b|#(root|app|__next)\b|\.(app|page|wrap|wrapper|layout|shell|site)\b|^x$")
+GROUND_VARS = {"--bg", "--background", "--paper", "--ground", "--canvas", "--color-bg", "--color-background", "--page", "--surface-0",
+               "--base", "--bg-page", "--page-bg"}
+INK_VARS = {"--ink", "--text", "--fg", "--foreground", "--color-text", "--text-primary", "--color-fg"}
 
 
 def extract(sources) -> dict:
+    """Fingerprint from source files. Light-mode declarations only; custom properties are resolved."""
+    table, rows = {}, []
+    for src in sources:
+        for sel, prop, val, _line, at in declarations(src):
+            dark = is_dark_context(sel, at)
+            rows.append((src, sel, prop, val, dark))
+            if prop.startswith("--") and not dark and prop not in table:
+                table[prop] = val
+    only_dark = bool(rows) and all(r[4] for r in rows if r[2] in GROUND_VARS or r[2].startswith("background"))
     fams, display, body = Counter(), Counter(), Counter()
-    hues, chroma_hues, bgs, neutral_tint = Counter(), Counter(), Counter(), Counter()
+    chroma_hues, bgs, neutral_tint, ink = Counter(), Counter(), Counter(), Counter()
     radii, shadows, sizes = Counter(), Counter(), Counter()
     centred = text_align = gradient = glass = cols3 = mono_small = 0
     tw = Counter()
@@ -116,68 +149,79 @@ def extract(sources) -> dict:
                 fams[fam] += 2
                 if how in ("next/font", "geist package", "tailwind config") and "mono" not in fam:
                     body[fam] += 1
-        for sel, prop, val, _line, _at in declarations(src):
-            low = val.lower()
-            fam = family_of(prop, val)
-            if fam and fam not in GENERIC:
-                fams[fam] += 1
-                if DISPLAY_SEL.search(sel) or "display" in prop or "heading" in prop:
-                    display[fam] += 2
-                if BODY_SEL.search(sel) or prop in ("--font-sans", "--font-body", "--font-text"):
-                    body[fam] += 2
-            for m in re.finditer(r"#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?|oklch|oklab)\([^)]*\)", val):
-                col = parse_color(m.group(0))
-                if not col or col[3] < 0.5:
-                    continue
-                L, c, h = srgb_to_oklch(*col[:3])
-                if c >= 0.07 and 0.25 < L < 0.92:
-                    chroma_hues[hue_name(h, c, L)] += 1
-                elif c >= 0.004:
-                    neutral_tint["warm" if (h < 115 or h > 340) else "cool"] += 1
-                else:
-                    neutral_tint["none"] += 1
-                if prop in ("background", "background-color", "--bg", "--background", "--color-bg", "--surface", "--paper") and \
-                        re.search(r"(^|[\s,])(body|html|:root|main|\.app|\.page|#root|#app)\b|^x$", sel + " ") and (L > 0.9 or L < 0.3):
-                    bgs[ground_of(col)] += 3 if re.search(r"body|html|:root", sel) else 1
-            if prop.endswith("radius"):
-                px = length_px(low.split()[0]) if low.split() else None
-                if "9999" in low or "999px" in low or low.startswith("50%") or "infinity" in low:
-                    radii["pill"] += 1
-                elif px is not None:
+    for src, sel, prop, raw, dark in rows:
+        if dark and not only_dark:
+            continue
+        val = resolve_vars(raw, table)
+        low = val.lower()
+        fam = family_of(prop, val)
+        if fam and fam not in GENERIC:
+            fams[fam] += 1
+            if DISPLAY_SEL.search(sel) or "display" in prop or "heading" in prop:
+                display[fam] += 2
+            if (BODY_SEL.search(sel) and not prop.startswith("--")) or prop in ("--font-sans", "--font-body", "--font-text"):
+                body[fam] += 3 if re.search(r"\b(body|html)\b", sel) else 2
+        is_ground = (prop in GROUND_VARS and re.search(r":root|html|body", sel)) or \
+                    (prop in ("background", "background-color") and GROUND_SEL.search(sel + " "))
+        is_ink = (prop in INK_VARS and re.search(r":root|html|body", sel)) or (prop == "color" and re.search(r"(^|[\s,])(body|html|:root)\b", sel))
+        for m in re.finditer(r"#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?|oklch|oklab)\([^)]*\)", val):
+            col = parse_color(m.group(0))
+            if not col or col[3] < 0.5:
+                continue
+            L, c, h = srgb_to_oklch(*col[:3])
+            if is_ink:
+                ink[hue_name(h, c, L) if c >= 0.012 else "neutral"] += 1
+            if is_ground and (L > 0.85 or L < 0.3):
+                bgs[ground_of(col)] += 3 if re.search(r"body|html|:root", sel) else 1
+                continue
+            if prop.startswith("--") and re.search(r"-(\d{2,3})$", prop):
+                continue  # ramp steps are raw material, not usage
+            if c >= 0.07 and 0.25 < L < 0.92:
+                chroma_hues[hue_name(h, c, L)] += 1
+            elif c >= 0.004:
+                neutral_tint["warm" if (h < 115 or h > 340) else "cool"] += 1
+            else:
+                neutral_tint["none"] += 1
+        if prop.endswith("radius") and not prop.startswith("--"):
+            first = low.split()[0] if low.split() else ""
+            if re.search(r"9999|999px|100vmax|infinity", low):
+                radii["pill"] += 1
+            elif first.endswith("%"):
+                pass  # circles (spinners, avatars) say nothing about the radius habit
+            else:
+                px = length_px(first)
+                if px is not None:
                     radii[radius_bucket(px)] += 1
-            if prop == "box-shadow" and low not in ("none", "0", "unset", "inherit"):
-                parts = re.sub(r"\([^)]*\)", "", low).split(",")[0].split()
-                nums = [length_px(p) for p in parts if length_px(p) is not None]
-                blur = nums[2] if len(nums) > 2 else 0
-                if "inset" in low and len(nums) < 3:
-                    continue
+        if prop == "box-shadow" and low not in ("none", "0", "unset", "inherit", "initial"):
+            parts = re.sub(r"\([^)]*\)", "", low).split(",")[0].split()
+            nums = [length_px(x) for x in parts if length_px(x) is not None]
+            blur = nums[2] if len(nums) > 2 else 0
+            if not ("inset" in low and len(nums) < 3):
                 if len(nums) >= 2 and blur == 0 and (abs(nums[0]) >= 2 or abs(nums[1]) >= 2):
                     shadows["hard"] += 1
                 elif len(nums) >= 4 and nums[0] == 0 and nums[1] == 0 and blur == 0:
                     shadows["hairline"] += 1
-                elif blur and blur >= 16 and re.search(r"#[0-9a-f]{3,8}|rgba?\(\s*(?!0[\s,]+0[\s,]+0)", low) and "0 0 " in low:
+                elif blur and blur >= 16 and nums[0] == 0 and nums[1] == 0 and re.search(r"#(?!000)[0-9a-f]{3,8}|rgba?\(\s*(?!0[\s,]+0[\s,]+0)|oklch|hsl", raw.lower()):
                     shadows["glow"] += 1
                 else:
                     shadows["soft"] += 1
-            if prop == "font-size":
-                px = length_px(low)
-                if px and 9 <= px <= 160:
-                    sizes[round(px)] += 1
-            if prop == "text-align":
-                text_align += 1
-                centred += low.startswith("center")
-            if "gradient(" in low and prop.startswith("background"):
-                gradient += 1
-            if prop in ("backdrop-filter", "-webkit-backdrop-filter") and "blur" in low:
-                glass += 1
-            if prop == "grid-template-columns" and re.search(r"repeat\(\s*3\s*,|^(1fr\s+){2}1fr$", low):
-                cols3 += 1
-            if prop == "font-family" and "mono" in low and re.search(r"label|eyebrow|kicker|tag|badge|caption|meta|overline", sel, re.I):
-                mono_small += 1
+        px = size_px(low) if prop == "font-size" else (font_shorthand_size(low) if prop == "font" else None)
+        if px and 9 <= px <= 200:
+            sizes[round(px)] += 1
+        if prop == "text-align":
+            text_align += 1
+            centred += low.startswith("center")
+        if "gradient(" in low and prop.startswith("background") and not re.search(r"transparent\s*[\d.]*%?\s*,\s*transparent|1px", low):
+            gradient += 1
+        if prop in ("backdrop-filter", "-webkit-backdrop-filter") and "blur" in low:
+            glass += 1
+        if prop == "grid-template-columns" and re.search(r"repeat\(\s*3\s*,|^(1fr\s+){2}1fr$", low):
+            cols3 += 1
+        if family_of(prop, val) and "mono" in family_of(prop, val) and re.search(r"label|eyebrow|kicker|tag|badge|caption|meta|overline|th\b", sel, re.I):
+            mono_small += 1
+    for src in sources:
         for tok, _line in class_tokens(src):
-            base = tok.split(":")[-1].lstrip("!-")
-            tw[base] += 1
-    # Tailwind classes
+            tw[tok.split(":")[-1].lstrip("!-")] += 1
     tw_used = sum(tw.values()) > 20 and any(k.startswith(("flex", "grid", "px-", "py-", "text-")) for k in tw)
     if tw_used:
         for k, n in tw.items():
@@ -188,7 +232,7 @@ def extract(sources) -> dict:
                     chroma_hues[hue_name(TW_HUE[name], 0.15, 0.6)] += n
                 elif name in TW_NEUTRAL:
                     neutral_tint[TW_NEUTRAL[name]] += n
-            if k in TW_RADIUS:
+            if k in TW_RADIUS and k != "rounded-full":
                 radii[radius_bucket(TW_RADIUS[k])] += n
             if re.match(r"shadow(-(sm|md|lg|xl|2xl))?$", k):
                 shadows["soft"] += n
@@ -203,7 +247,7 @@ def extract(sources) -> dict:
                 gradient += n
             if k.startswith("backdrop-blur"):
                 glass += n
-            if k in ("grid-cols-3", "md:grid-cols-3", "lg:grid-cols-3"):
+            if k == "grid-cols-3":
                 cols3 += n
             if k == "font-mono" and (tw.get("uppercase") or tw.get("tracking-widest") or tw.get("tracking-wider")):
                 mono_small += 1
@@ -211,78 +255,102 @@ def extract(sources) -> dict:
                 bgs["white"] += 1
             if re.match(r"bg-(black|zinc-9\d0|neutral-9\d0|slate-9\d0|gray-9\d0)$", k):
                 bgs["near-black"] += 1
-    fonts = [f for f, _n in fams.most_common(4)]
-    if not fonts:
-        fonts = ["(system)"]
-    sz = sorted(s for s, n in sizes.items() if n >= 1)
+    fonts = [f for f, _n in fams.most_common(4)] or ["(system)"]
+    non_mono = [f for f in fonts if "mono" not in f] or fonts
+    text_face = (body.most_common(1) or [(non_mono[0], 0)])[0][0]
+    display_face = (display.most_common(1) or [(text_face, 0)])[0][0]
+    sz = sorted(sizes)
     ratios = [b / a for a, b in zip(sz, sz[1:]) if 1.05 < b / a < 1.7]
     total_r = sum(radii.values())
-    fp = {
-        "fonts": fonts,
-        "display": (display.most_common(1) or [(fonts[0], 0)])[0][0],
-        "text": (body.most_common(1) or [(fonts[-1] if len(fonts) > 1 else fonts[0], 0)])[0][0],
-        "accent": [h for h, _n in chroma_hues.most_common(2)] or ["neutral"],
+    accents = [h for h, _n in chroma_hues.most_common(2)] or ["neutral"]
+    return {
+        "fonts": fonts, "display": display_face, "text": text_face,
+        "accent": accents,
         "accent_spread": len([h for h, n in chroma_hues.items() if n >= max(2, 0.12 * sum(chroma_hues.values()))]),
         "neutral": (neutral_tint.most_common(1) or [("none", 0)])[0][0],
         "ground": (bgs.most_common(1) or [("unknown", 0)])[0][0],
+        "ink": (ink.most_common(1) or [("unknown", 0)])[0][0],
         "radius": (radii.most_common(1) or [("0", 0)])[0][0],
         "radius_uniform": round(radii.most_common(1)[0][1] / total_r, 2) if total_r else 0.0,
         "shadow": (shadows.most_common(1) or [("none", 0)])[0][0],
         "sizes": sz[:14],
         "ratio": round(statistics.median(ratios), 3) if ratios else None,
         "centred": bool(text_align and centred / text_align > 0.6 and centred >= 4),
-        "gradient": gradient >= 2,
-        "glass": glass >= 2,
-        "three_columns": cols3 >= 2,
-        "mono_labels": mono_small >= 2,
+        "gradient": gradient >= 2, "glass": glass >= 2, "three_columns": cols3 >= 2, "mono_labels": mono_small >= 2,
         "tailwind": bool(tw_used),
         "evidence": {"font_declarations": sum(fams.values()), "colours": sum(chroma_hues.values()) + sum(neutral_tint.values()),
                      "radii": total_r, "files": len(sources)},
     }
-    return fp
 
 
 def from_render(path: str) -> dict:
+    """Fingerprint from render_check.py --json output (the widest light run)."""
     with open(path, encoding="utf-8") as fh:
         runs = json.load(fh)
-    f = max(runs, key=lambda r: r.get("width", 0))
-    fams = [x["name"].lower() for x in f["families"] if x["share"] > 0.02 and not x.get("generic")] or ["(system)"]
+    light = [r for r in runs if r.get("scheme") != "dark"] or runs
+    f = max(light, key=lambda r: r.get("width", 0))
+    named = [(x["name"].lower(), x["share"]) for x in f["families"] if x["share"] > 0.02 and not x.get("generic")]
+    fams = [n for n, _s in named] or ["(system)"]
+    non_mono = [(n, sh) for n, sh in named if "mono" not in n] or named or [("(system)", 1)]
+    text_face = max(non_mono, key=lambda x: x[1])[0]
+    big = (f.get("fold", {}).get("largest") or {}).get("family", "").lower()
+    display_face = big if big and big not in GENERIC else text_face
     hues = Counter()
-    for hexv, share in f["textColors"]:
+    ink = "unknown"
+    for i, (hexv, share) in enumerate(f["textColors"]):
         col = parse_color(hexv)
         L, c, h = srgb_to_oklch(*col[:3])
-        if c >= 0.07:
+        if i == 0:
+            ink = hue_name(h, c, L) if c >= 0.012 else "neutral"
+        elif c >= 0.07:
             hues[hue_name(h, c, L)] += share
-    bg = parse_color(f["backgrounds"][0]) if f["backgrounds"] else (1, 1, 1, 1)
-    rad = f["radii"][0][0] if f["radii"] else "0"
-    total_r = sum(n for _k, n in f["radii"]) or 1
-    sz = [round(s) for s, share in f["sizes"] if share > 0.005]
+    for hexv in f.get("fills", []):
+        col = parse_color(hexv)
+        L, c, h = srgb_to_oklch(*col[:3])
+        if c >= 0.07 and 0.25 < L < 0.92:
+            hues[hue_name(h, c, L)] += 0.05
+    page_bg = f.get("pageBackground") or (f["backgrounds"][0] if f["backgrounds"] else "#ffffff")
+    bg = parse_color(page_bg) or (1, 1, 1, 1)
+    radii = [(k, n) for k, n in f["radii"] if not str(k).endswith("%")]
+    rad = radii[0][0] if radii else "0"
+    total_r = sum(n for _k, n in radii) or 1
+    sz = [round(x) for x, share in f["sizes"]]
     ratios = [b / a for a, b in zip(sz, sz[1:]) if 1.05 < b / a < 1.7]
-    return {"fonts": fams, "display": fams[0], "text": fams[-1], "accent": [h for h, _ in hues.most_common(2)] or ["neutral"],
-            "accent_spread": len(hues), "neutral": "none", "ground": ground_of(bg),
+    return {"fonts": fams, "display": display_face, "text": text_face, "accent": [h for h, _ in hues.most_common(2)] or ["neutral"],
+            "accent_spread": len(hues), "neutral": "unknown", "ground": ground_of(bg), "ink": ink,
             "radius": rad if rad == "pill" else radius_bucket(float(re.sub(r"[^0-9.]", "", rad) or 0)),
-            "radius_uniform": round((f["radii"][0][1] if f["radii"] else 0) / total_r, 2),
+            "radius_uniform": round((radii[0][1] if radii else 0) / total_r, 2),
             "shadow": "soft" if f["shadows"] else "none", "sizes": sz, "ratio": round(statistics.median(ratios), 3) if ratios else None,
             "centred": f["centeredShare"] > 0.6, "gradient": f["gradients"] >= 2 or f["gradientText"] > 0, "glass": f["backdropBlur"] >= 2,
             "three_columns": False, "mono_labels": False, "tailwind": False, "evidence": {"rendered": True}}
 
 
+def faces(fp: dict) -> set:
+    """The typefaces that carry a design: display and text faces, without system and mono families."""
+    return {f for f in (fp.get("display"), fp.get("text")) if f and f != "(system)" and "mono" not in f and f not in GENERIC}
+
+
 def similarity(a: dict, b: dict):
     """Return (score 0..1, list of shared traits) for two full fingerprints."""
     shared, score, total = [], 0.0, 0.0
-    fa, fb = set(a["fonts"]), set(b["fonts"])
+    fa, fb = faces(a) or set(a["fonts"][:2]), faces(b) or set(b["fonts"][:2])
     total += WEIGHTS["fonts"]
     if fa & fb:
-        part = len(fa & fb) / max(1, min(len(fa), len(fb)))
-        score += WEIGHTS["fonts"] * part
+        score += WEIGHTS["fonts"] * len(fa & fb) / max(1, min(len(fa), len(fb)))
         shared.append("typefaces: " + ", ".join(sorted(fa & fb)))
     total += WEIGHTS["accent"]
-    if set(a["accent"]) & set(b["accent"]):
+    if a["accent"][0] == b["accent"][0]:
         score += WEIGHTS["accent"]
-        shared.append("accent hue: " + ", ".join(sorted(set(a["accent"]) & set(b["accent"]))))
-    for key, labelf in (("ground", "ground: {}"), ("neutral", "neutrals: {}"), ("radius", "corner radius: {}"), ("shadow", "shadows: {}")):
+        shared.append("accent hue: " + a["accent"][0])
+    elif set(a["accent"]) & set(b["accent"]):
+        score += WEIGHTS["accent"] * 0.5
+        shared.append("a shared hue: " + ", ".join(sorted(set(a["accent"]) & set(b["accent"]))))
+    for key, labelf in (("ground", "ground: {}"), ("ink", "ink: {}"), ("neutral", "neutrals: {}"), ("radius", "corner radius: {}"),
+                        ("shadow", "shadows: {}")):
+        if a.get(key, "unknown") == "unknown" or b.get(key, "unknown") == "unknown":
+            continue
         total += WEIGHTS[key]
-        if a[key] == b[key] and a[key] != "unknown":
+        if a[key] == b[key]:
             score += WEIGHTS[key]
             shared.append(labelf.format(a[key]))
     if a.get("ratio") and b.get("ratio"):
@@ -292,12 +360,16 @@ def similarity(a: dict, b: dict):
             shared.append(f"type-scale ratio about {a['ratio']}")
     for key, name in (("centred", "mostly centred text"), ("gradient", "gradient fills"), ("glass", "blurred glass"),
                       ("mono_labels", "monospace labels")):
-        total += WEIGHTS[key]
-        if a.get(key) == b.get(key):
-            score += WEIGHTS[key]
-            if a.get(key):
+        if a.get(key) or b.get(key):  # a habit neither has is not a resemblance
+            total += WEIGHTS[key]
+            if a.get(key) == b.get(key):
+                score += WEIGHTS[key]
                 shared.append(name)
-    return score / total, shared
+    return (score / total if total else 0.0), shared
+
+
+def shared_faces(a: dict, b: dict) -> set:
+    return faces(a) & faces(b)
 
 
 def nearest_default(fp: dict):
@@ -323,7 +395,7 @@ def nearest_default(fp: dict):
                     score += w
                     matched.add(key)
                     hit.append("accent " + ", ".join(sorted(got)))
-            elif mine in allowed:
+            elif mine in allowed and mine != "unknown":
                 score += w
                 matched.add(key)
                 if mine not in (False, None):
@@ -338,8 +410,8 @@ def nearest_default(fp: dict):
 def describe(fp: dict) -> list:
     return [["Typefaces", ", ".join(fp["fonts"]) + (f" (display: {fp['display']}; text: {fp['text']})" if len(fp["fonts"]) > 1 else "")],
             ["Accent hue", ", ".join(fp["accent"]) + (f"; {fp['accent_spread']} hue families in use" if fp.get("accent_spread", 0) > 2 else "")],
-            ["Neutrals", fp["neutral"]], ["Ground", fp["ground"]],
-            ["Corner radius", f"{fp['radius']}px bucket" + (f", on {fp['radius_uniform']:.0%} of rounded boxes" if fp.get("radius_uniform") else "")],
+            ["Neutrals", fp["neutral"]], ["Ground", fp["ground"]], ["Ink", fp.get("ink", "unknown")],
+            ["Corner radius", ("pill" if fp["radius"] == "pill" else f"{fp['radius']}px") + (f", on {fp['radius_uniform']:.0%} of rounded boxes" if fp.get("radius_uniform") else "")],
             ["Shadows", fp["shadow"]], ["Type sizes", ", ".join(str(s) for s in fp["sizes"]) or "not found"],
             ["Scale ratio", fp["ratio"] or "irregular or not found"],
             ["Habits", ", ".join(k.replace("_", " ") for k in ("centred", "gradient", "glass", "three_columns", "mono_labels") if fp.get(k)) or "none flagged"]]
@@ -357,25 +429,46 @@ def main(argv=None):
     ap.add_argument("--save", metavar="NAME", help="store this fingerprint under a name")
     ap.add_argument("--against", action="store_true", help="compare with every saved fingerprint")
     ap.add_argument("--registry", help="folder for saved fingerprints (default ~/.human-design/fingerprints)")
+    ap.add_argument("--taken", action="store_true", help="list what the saved projects already use (typefaces, ground, ink, accent), to read before choosing")
+    ap.add_argument("--same-brand", action="store_true", help="the projects belong to one brand: sharing typefaces and colours is intended")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+    if a.taken:
+        reg = registry_dir(a)
+        rows = []
+        if os.path.isdir(reg):
+            for f in sorted(os.listdir(reg)):
+                if f.endswith(".json"):
+                    with open(os.path.join(reg, f), encoding="utf-8") as fh:
+                        o = json.load(fh)
+                    rows.append([f[:-5], ", ".join(sorted(faces(o))) or o["fonts"][0], o.get("ground", "?"), o.get("ink", "?"), ", ".join(o["accent"]),
+                                 o.get("radius", "?"), o.get("shadow", "?")])
+        if not rows:
+            print(f"No saved projects in {reg}. Nothing is taken yet.")
+            return 0
+        print("# Already used by this owner's projects\n\n" + md_table(["project", "typefaces", "ground", "ink", "accent", "radius", "shadow"], rows))
+        print("\nA new, unrelated product must not reuse a typeface from this list, nor a ground and accent pair. Choose from its own subject.")
+        return 0
     if a.compare:
         if len(a.compare) < 2:
             ap.error("--compare needs two or more paths")
         fps = [(os.path.basename(os.path.abspath(p).rstrip("/")) or p, extract(collect([p]))) for p in a.compare]
         o = ["# Fingerprint comparison", ""]
-        rows, worst = [], 0.0
+        rows, worst, clashes = [], 0.0, []
         for i in range(len(fps)):
             for j in range(i + 1, len(fps)):
                 s, shared = similarity(fps[i][1], fps[j][1])
                 worst = max(worst, s)
                 rows.append([f"{fps[i][0]} vs {fps[j][0]}", f"{s:.0%}", "; ".join(shared) or "nothing notable"])
+                clashes += clash(fps[i][0], fps[i][1], fps[j][0], fps[j][1])
         o += [md_table(["pair", "similarity", "shared"], rows), ""]
         for name, fp in fps:
             o += [f"## {name}", "", md_table(["trait", "value"], describe(fp)), ""]
         o.append(verdict(worst))
-        print(json.dumps({"pairs": rows, "fingerprints": dict(fps)}, indent=1) if a.json else "\n".join(o))
-        return 2 if worst >= 0.75 else 0
+        if clashes and not a.same_brand:
+            o += [""] + clashes
+        print(json.dumps({"pairs": rows, "clashes": clashes, "fingerprints": dict(fps)}, indent=1) if a.json else "\n".join(o))
+        return 2 if (round(worst, 2) >= 0.75 or (clashes and not a.same_brand)) else 0
     if not a.paths and not a.render:
         ap.error("give a project path, --render FILE, or --compare A B")
     fp = from_render(a.render) if a.render else extract(collect(a.paths))
@@ -397,7 +490,7 @@ def main(argv=None):
     worst = 0.0
     reg = registry_dir(a)
     if a.against:
-        rows = []
+        rows, clashes = [], []
         if os.path.isdir(reg):
             for f in sorted(os.listdir(reg)):
                 if f.endswith(".json") and f[:-5] != (a.save or ""):
@@ -406,19 +499,37 @@ def main(argv=None):
                     s, shared = similarity(fp, other)
                     worst = max(worst, s)
                     rows.append([f[:-5], f"{s:.0%}", "; ".join(shared) or "nothing notable"])
+                    clashes += clash("this design", fp, f[:-5], other)
         o += ["", "## Against your other projects", ""]
         o += [md_table(["project", "similarity", "shared"], sorted(rows, key=lambda r: -float(r[1][:-1]))), "", verdict(worst)] if rows else \
             [f"No saved fingerprints in {reg}. Save each project once with --save NAME."]
+        if clashes and not a.same_brand:
+            o += [""] + clashes
+            worst = max(worst, 0.75)
     if a.save:
         os.makedirs(reg, exist_ok=True)
         with open(os.path.join(reg, re.sub(r"[^A-Za-z0-9._-]+", "-", a.save) + ".json"), "w", encoding="utf-8") as fh:
             json.dump(fp, fh, indent=1)
         o += ["", f"Saved as \"{a.save}\" in {reg}."]
     print(json.dumps({"fingerprint": fp, "defaults": near, "worst_project_similarity": worst}, indent=1) if a.json else "\n".join(o))
-    return 2 if (top_score >= 0.75 or worst >= 0.75) else 0
+    return 2 if (top_score >= 0.75 or round(worst, 2) >= 0.75) else 0
+
+
+def clash(name_a: str, a: dict, name_b: str, b: dict) -> list:
+    """Hard rules between two unrelated projects of one owner, whatever the overall score."""
+    out = []
+    both = shared_faces(a, b)
+    if both:
+        out.append(f"Clash: {name_a} and {name_b} both set type in {', '.join(sorted(both))}. Unrelated products should not share a "
+                   "text or display face: choose another for the newer one from its own subject (or pass --same-brand).")
+    if a.get("ground") == b.get("ground") and a.get("ground") not in ("unknown", "white") and a["accent"][0] == b["accent"][0] != "neutral":
+        out.append(f"Clash: {name_a} and {name_b} share the same ground ({a['ground']}) and accent hue ({a['accent'][0]}). "
+                   "Re-derive the newer one's colours from its own subject (or pass --same-brand).")
+    return out
 
 
 def verdict(worst: float) -> str:
+    worst = round(worst, 2)
     if worst >= 0.75:
         return (f"Verdict: {worst:.0%} similar. These would be taken for the same product. Different subjects need different type, "
                 "ground and accent at the least; re-derive the newer one's identity from its own subject.")
