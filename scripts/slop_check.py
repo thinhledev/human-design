@@ -64,7 +64,15 @@ FAKE_PROOF = [r"\btrusted by\s+(over\s+)?[\d,.]+\s*[kKmM+]", r"\bjoin\s+(over\s+
               r"\b(ceo|cto|founder|head of \w+)\s+(at|,)\s+(techcorp|acme|company|startup ?x|example)\b", r"\bas seen (in|on)\b",
               r"\bloved by\s+(thousands|millions|teams|developers)\b"]
 PLACEHOLDER_HOSTS = r"(via\.placeholder\.com|placehold\.co|placeholder\.com|picsum\.photos|source\.unsplash\.com|loremflickr\.com|dummyimage\.com|placekitten\.com|i\.pravatar\.cc|ui-avatars\.com|randomuser\.me|placeholder\.svg|/api/placeholder)"
-EMOJI = re.compile("[\U0001F300-\U0001FAFF\u2600-\u26FF\u2700-\u27BF\u2B50\u2B06\u2194-\u21AA]\uFE0F?")
+# Emoji, not text symbols: pictographs drawn in colour by default (Unicode Emoji_Presentation), or any symbol
+# followed by the emoji variation selector U+FE0F. Stars, check marks, arrows and geometric shapes such as
+# ☆ ★ ✓ → ▲ are typography and are not flagged.
+EMOJI_PRESENTATION = ("\U0001F300-\U0001F64F\U0001F680-\U0001F6FF\U0001F7E0-\U0001F7EB\U0001F900-\U0001F9FF\U0001FA70-\U0001FAFF"
+                      "\u231A\u231B\u23E9-\u23EC\u23F0\u23F3\u25FD\u25FE\u2614\u2615\u2648-\u2653\u267F\u2693\u26A1\u26AA\u26AB"
+                      "\u26BD\u26BE\u26C4\u26C5\u26CE\u26D4\u26EA\u26F2\u26F3\u26F5\u26FA\u26FD\u2705\u270A\u270B\u2728\u274C"
+                      "\u274E\u2753-\u2755\u2757\u2795-\u2797\u27B0\u27BF\u2B1B\u2B1C\u2B50\u2B55")
+EMOJI = re.compile("[" + EMOJI_PRESENTATION + "]\uFE0F?|[\u2190-\u21FF\u2300-\u23FF\u25A0-\u27BF\u2900-\u297F\u2B00-\u2BFF\u3030\u303D"
+                   "\u3297\u3299\u00A9\u00AE\u203C\u2049\u2122\u2139]\uFE0F")
 PURPLE = re.compile(r"\b(?:bg|from|via|to|text|border|ring|shadow)-(indigo|violet|purple|fuchsia)-(400|500|600|700)\b")
 PURPLE_HEX = re.compile(r"#(6366f1|4f46e5|4338ca|8b5cf6|7c3aed|6d28d9|a855f7|9333ea|7e22ce|c084fc|a78bfa|818cf8|667eea|764ba2|6c63ff|5b21b6)\b", re.I)
 

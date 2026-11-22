@@ -23,7 +23,10 @@ the registry; nothing is written without --save.
 
 Two rules apply between unrelated projects whatever the score: they may not
 share a text or display typeface, and they may not share both ground and accent
-hue. Pass --same-brand when the projects belong to one brand.
+hue. Pass --same-brand when the projects belong to one brand. --compare on
+directions or screens of one project (files in one folder, a directions/
+folder, or paths under one design.json or DESIGN.md) prints a note instead of
+clashes.
 
 Light-mode declarations are read; custom properties (tokens) are resolved. Give
 each design its own files: one HTML or CSS file per direction when comparing
@@ -73,7 +76,7 @@ DEFAULT_LOOKS = {
     "cream editorial (second-generation default)": {
         "fonts": ["instrument serif", "playfair display", "fraunces", "cormorant garamond", "cormorant", "newsreader", "dm serif display",
                   "libre baskerville", "eb garamond", "lora"],
-        "ground": ["cream"], "neutral": ["warm"], "accent": ["orange", "red", "green", "amber"], "radius": ["0", "1-3", "4-6"],
+        "ground": ["cream", "warm white"], "neutral": ["warm"], "accent": ["orange", "red", "green", "amber"], "radius": ["0", "1-3", "4-6"],
         "shadow": ["none", "hairline"]},
     "dark with a neon accent": {
         "fonts": ["inter", "geist", "space grotesk", "jetbrains mono", "geist mono", "(system)"], "ground": ["near-black"],
@@ -114,7 +117,8 @@ def ground_of(rgb) -> str:
     if c < 0.006:
         return "white" if L > 0.975 else "grey"
     if 40 <= h < 110:
-        return "cream"
+        # cream is a visibly yellowed paper (#f5f0e1, chroma 0.012 or more); lime-wash or newsprint just off white is not
+        return "cream" if c >= 0.011 else "warm white"
     if 110 <= h < 175:
         return "sage"
     if 175 <= h < 290:
@@ -139,6 +143,8 @@ def extract(sources) -> dict:
                 table[prop] = val
     only_dark = bool(rows) and all(r[4] for r in rows if r[2] in GROUND_VARS or r[2].startswith("background"))
     fams, display, body = Counter(), Counter(), Counter()
+    # status classes whose text colour is only used for state ("In stock", "Failed"), never for the brand
+    status_sel = re.compile(r"status|stock|availab|\b(valid|invalid|ok|done|paid|overdue|late|online|offline)\b", re.I)
     chroma_hues, bgs, neutral_tint, ink = Counter(), Counter(), Counter(), Counter()
     radii, shadows, sizes = Counter(), Counter(), Counter()
     centred = text_align = gradient = glass = cols3 = mono_small = 0
@@ -176,8 +182,11 @@ def extract(sources) -> dict:
                 continue
             if prop.startswith("--") and re.search(r"-(\d{2,3})$", prop):
                 continue  # ramp steps are raw material, not usage
-            if re.search(r"good|warn|bad|info|danger|success|error|alert|critical|positive|negative|caution", prop + " " + sel, re.I):
-                continue  # semantic colours are not the brand's accent
+            if re.search(r"good|warn|bad|info|danger|success|error|alert|critical|positive|negative|caution|-ok\b",
+                         prop + " " + sel + " " + raw, re.I):
+                continue  # semantic colours (named so in the property, the selector or the token used) are not the brand's accent
+            if prop == "color" and status_sel.search(sel):
+                continue  # status text such as "In stock" in green
             if c >= 0.07 and 0.25 < L < 0.92:
                 chroma_hues[hue_name(h, c, L)] += 1
             elif c >= 0.004:
@@ -467,10 +476,16 @@ def main(argv=None):
         for name, fp in fps:
             o += [f"## {name}", "", md_table(["trait", "value"], describe(fp)), ""]
         o.append(verdict(worst))
-        if clashes and not a.same_brand:
+        same = a.same_brand or one_project(a.compare)
+        if clashes and not a.same_brand and same:
+            o += ["", "Note: these paths are directions or screens of one project (one folder, a directions/ folder, or under one "
+                      "design.json or DESIGN.md), so the clash rules for unrelated products do not apply. Shared typefaces are "
+                      "expected; judge the directions by how far apart the similarity puts them."]
+        elif clashes and not same:
             o += [""] + clashes
-        print(json.dumps({"pairs": rows, "clashes": clashes, "fingerprints": dict(fps)}, indent=1) if a.json else "\n".join(o))
-        return 2 if (round(worst, 2) >= 0.75 or (clashes and not a.same_brand)) else 0
+        print(json.dumps({"pairs": rows, "clashes": [] if same else clashes, "one_project": same and not a.same_brand,
+                          "fingerprints": dict(fps)}, indent=1) if a.json else "\n".join(o))
+        return 2 if (round(worst, 2) >= 0.75 or (clashes and not same)) else 0
     if not a.paths and not a.render:
         ap.error("give a project path, --render FILE, or --compare A B")
     fp = from_render(a.render) if a.render else extract(collect(a.paths))
@@ -515,6 +530,27 @@ def main(argv=None):
         o += ["", f"Saved as \"{a.save}\" in {reg}."]
     print(json.dumps({"fingerprint": fp, "defaults": near, "worst_project_similarity": worst}, indent=1) if a.json else "\n".join(o))
     return 2 if (top_score >= 0.75 or round(worst, 2) >= 0.75) else 0
+
+
+def one_project(paths) -> bool:
+    """True when the compared paths are directions or screens of one project rather than unrelated products: files in
+    one folder, anything under a directions/ folder, or a common folder (or one above it) holding design.json or DESIGN.md."""
+    full = [os.path.abspath(p) for p in paths]
+    if any("directions" in p.split(os.sep) for p in full):
+        return True
+    dirs = [p if os.path.isdir(p) else os.path.dirname(p) for p in full]
+    if len(set(dirs)) == 1:
+        return True
+    try:
+        cur = os.path.commonpath(dirs)
+    except ValueError:
+        return False
+    stop = {os.path.expanduser("~"), os.path.dirname(os.path.expanduser("~")), os.path.abspath(os.sep)}
+    while cur not in stop and cur != os.path.dirname(cur):
+        if any(os.path.isfile(os.path.join(cur, m)) for m in ("design.json", "DESIGN.md")):
+            return True
+        cur = os.path.dirname(cur)
+    return False
 
 
 def clash(name_a: str, a: dict, name_b: str, b: dict) -> list:

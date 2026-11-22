@@ -73,6 +73,56 @@ class Colour(unittest.TestCase):
         self.assertEqual([(sel, p) for sel, p, _v, _l, _at in d.declarations(css)], [(".b", "padding"), (".a", "color")])
 
 
+class Fixes(unittest.TestCase):
+    """Problems found when agents used the skill on real briefs."""
+
+    def test_rem_ignores_body_base(self):
+        spec = json.loads(json.dumps(tokens.STARTER))
+        spec["type"]["base"] = 18
+        self.assertEqual({t["px"]: t["value"] for t in tokens.type_tokens(spec)}[18], "1.125rem")
+
+    def test_stars_are_not_emoji(self):
+        self.assertIsNone(slop_check.EMOJI.search("Rated \u2605\u2605\u2605\u2606 \u2713 \u2192 \u25b2"))
+        self.assertIsNotNone(slop_check.EMOJI.search("\U0001F680"))
+        self.assertIsNotNone(slop_check.EMOJI.search("\u2764\uFE0F"))
+
+    def test_grounds_and_status_colours(self):
+        self.assertEqual(fingerprint.ground_of(d.parse_color("#f2f0eb")), "warm white")
+        self.assertEqual(fingerprint.ground_of(d.parse_color("#f5f0e1")), "cream")
+        css = d.Source("a.css", ":root{--bg:#fff;--success:#1a7f37}body{background:var(--bg)}a{color:#1f5f8b}"
+                                ".stock{color:#1a7f37}.x{color:var(--success)}.y{color:var(--success)}")
+        self.assertEqual(fingerprint.extract([css])["accent"], ["blue"])
+
+    def test_import_is_followed_and_directions_do_not_clash(self):
+        tmp = tempfile.mkdtemp()
+        os.makedirs(os.path.join(tmp, "directions"))
+        open(os.path.join(tmp, "tokens.css"), "w").write(":root{--bg:#f5f0e1}")
+        open(os.path.join(tmp, "app.css"), "w").write('@import "tokens.css";\nbody{background:var(--bg)}')
+        self.assertEqual(fingerprint.extract(d.collect([os.path.join(tmp, "app.css")]))["ground"], "cream")
+        paths = []
+        for n in "abc":
+            paths.append(os.path.join(tmp, "directions", n + ".html"))
+            open(paths[-1], "w").write('<style>body{font-family:"Archivo";background:#f3f1ee}h1{font-size:%dpx}</style>' % (30 + len(paths) * 9))
+        _code, out = run(fingerprint, ["--compare"] + paths)
+        self.assertNotIn("Clash:", out)
+        self.assertIn("do not apply", out)
+
+    def test_extra_colours_and_fonts(self):
+        spec = json.loads(json.dumps(tokens.STARTER))
+        spec.update(name="Pinboard")
+        for role, fam in (("display", "Fraunces"), ("text", "Literata"), ("mono", "Commit Mono")):
+            spec["type"][role]["family"] = fam
+        spec["type"]["extra"] = {"hand": {"family": "Caveat", "fallback": "cursive"}}
+        spec["color"]["extra"] = {"card-buff": "#e8d9b5", "pin": {"hue": 25, "chroma": 0.15, "lightness": 0.55}}
+        data = tokens.build(spec)
+        css, tw = tokens.css_vars(data), tokens.tailwind(data)
+        self.assertIn('--font-hand: "Caveat", cursive;', css)
+        self.assertIn("--card-buff: #e8d9b5;", css)
+        self.assertIn("--pin: #", css)
+        self.assertIn("--color-card-buff: var(--card-buff);", tw)
+        self.assertIn("cardBuff", tokens.swift(data))
+
+
 class Scripts(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -161,6 +211,36 @@ class Scripts(unittest.TestCase):
         self.assertEqual(facts["lowContrastCount"], 0)
         self.assertEqual(facts["overflowX"], 0)
         self.assertLess(facts["centeredShare"], 0.2)
+
+    @unittest.skipUnless(render_check.find_chrome(), "no Chrome, Chromium or Edge")
+    def test_render_settles_and_names_what_was_drawn(self):
+        page = os.path.join(self.tmp, "dark", "dial.html")
+        os.makedirs(os.path.dirname(page))
+        with open(page, "w", encoding="utf-8") as fh:
+            fh.write("""<!doctype html><html lang="en"><head><title>Dial</title><style>
+body{margin:0;background:#141414;color:#eee;font:16px/1.5 Georgia,serif}
+@keyframes rise{from{opacity:0}to{opacity:1}} h1{font-size:40px;animation:rise 3s both}
+@media (prefers-reduced-motion: reduce){h1{animation:none}}
+.toast{position:fixed;left:0;right:0;top:1500px;height:80px;background:#f00}
+.led{display:inline-block;width:30px;height:30px}.a{box-shadow:0 0 6px #f00}.b{box-shadow:0 0 6px #0f0}.c{box-shadow:0 0 6px #00f}
+.d{box-shadow:0 0 6px #ff0}.e{box-shadow:0 0 6px #0ff}.small{font-size:10px}
+</style></head><body><h1>Dial</h1><p style="height:1800px">Body text long enough to count in the measurement.</p>
+<svg width="300" height="60"><text x="0" y="20" font-size="8">0 10 20 30 40 50 60 70 80 90 100 110 120</text></svg>
+<span class="led a"></span><span class="led b"></span><span class="led c"></span><span class="led d"></span><span class="led e"></span>
+<p class="small">Small print that is a decision here.</p><div class="toast"></div></body></html>""")
+        with open(os.path.join(os.path.dirname(page), "design.json"), "w") as fh:
+            json.dump({"deliberate": {"small-text": "tick labels like a printed dial"}}, fh)
+        out_dir = os.path.join(self.tmp, "dshots")
+        code, out = run(render_check, [page, "--out", out_dir, "--widths", "1280", "--tile", "0"])
+        self.assertEqual(os.listdir(out_dir), ["dial-1280-dark.png"])
+        self.assertIn("drew a dark ground", out)
+        self.assertIn("declared deliberate: tick labels", out)
+        self.assertNotIn("distinct shadows", out)
+        code, out = run(render_check, [page, "--widths", "1280", "--json"])
+        facts = json.loads(out)[0]
+        self.assertGreater(facts["svgChars"], 0)
+        self.assertNotIn(8, [size for size, _share in facts["sizes"]])
+        self.assertEqual(facts["shadows"], 1)
 
 
 if __name__ == "__main__":

@@ -285,11 +285,15 @@ def collect(paths, max_bytes: int = 1_500_000):
                     out.append(Source(f, fh.read()))
             except OSError:
                 continue
-    # follow local stylesheets linked from the pages, so a page checked alone still has its tokens
-    for src in list(out):
-        if src.ext not in (".html", ".htm"):
+    # follow local stylesheets linked from the pages and @import-ed by stylesheets (app.css importing tokens.css),
+    # so a page or stylesheet checked alone still has its tokens
+    i = 0
+    while i < len(out):
+        src = out[i]
+        i += 1
+        if src.ext not in (".html", ".htm") and src.ext not in STYLE_EXT:
             continue
-        for m in re.finditer(r"""<link[^>]+href=["']([^"'#?]+\.css)["']|@import\s+(?:url\()?["']([^"')]+\.css)["']""", src.text, re.I):
+        for m in re.finditer(r"""<link[^>]+href=["']([^"'#?]+\.css)["']|@import\s+(?:url\(\s*)?["']?([^"'()\s;#?]+\.css)""", src.text, re.I):
             href = m.group(1) or m.group(2)
             if re.match(r"^(?:[a-z]+:)?//", href):
                 continue

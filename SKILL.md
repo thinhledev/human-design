@@ -107,7 +107,7 @@ Python 3.8 or newer, standard library only. Run them by path from the skill fold
 ```bash
 python3 scripts/tokens.py --init design.json                                   # starter identity file; replace every value
 python3 scripts/tokens.py design.json [--css F] [--tailwind F] [--json F] [--swift F] [--kotlin F]
-python3 scripts/render_check.py <file|URL> [--out shots] [--widths 390,1440] [--schemes light,dark] [--squint] [--fold] [--surface S] [--tile 1600] [--json] [--chrome PATH]
+python3 scripts/render_check.py <file|URL> [--out shots] [--widths 390,1440] [--schemes light,dark] [--squint] [--fold] [--surface S] [--tile 1600] [--identity design.json] [--json] [--chrome PATH]
 python3 scripts/slop_check.py <paths…> [--surface marketing|app|desktop|mobile|store] [--identity design.json] [--ignore ids] [--json]
 python3 scripts/slop_check.py --list                                           # the catalogue of tells, with fixes
 python3 scripts/fingerprint.py <paths…> [--against] [--save NAME] [--same-brand] [--registry DIR] [--render shots.json] [--json]

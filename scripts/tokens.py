@@ -23,10 +23,13 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import apca, fit_oklch, md_table, to_hex, wcag_contrast  # noqa: E402
+from design_lib import apca, fit_oklch, md_table, parse_color, srgb_to_oklch, to_hex, wcag_contrast  # noqa: E402
+
+ROOT_PX = 16  # rem is relative to the root font size; the tokens never change it, so every rem value divides by 16
 
 STEPS = [50, 100, 200, 300, 400, 500, 600, 700, 800, 900, 950]
 LIGHT = [0.975, 0.945, 0.895, 0.825, 0.735, 0.64, 0.55, 0.465, 0.385, 0.30, 0.22]
@@ -45,6 +48,9 @@ STARTER = {
         "deliberate": "tell ids from slop_check.py that are real decisions, each with a reason that names the subject",
         "color.focus": "\"ink\" to draw focus rings in the text colour, when the accent is not the action colour",
         "color.semantic": "hues for good, warn, bad, info; move warn away from the accent if they are close (a yellow accent and an amber warning)",
+        "color.extra": "optional named colours beyond the roles, such as materials: {\"card-buff\": \"#e8d9b5\", \"pin\": {\"hue\": 25, \"chroma\": 0.15, \"lightness\": 0.55}}; a value may also be {\"light\": ..., \"dark\": ...}. Each becomes --NAME",
+        "type.extra": "optional extra font roles beyond display, text and mono: {\"hand\": {\"family\": \"...\", \"fallback\": \"cursive\", \"source\": \"...\"}} or {\"hand\": \"Family\"}. Each becomes --font-ROLE",
+        "type.base": "body text size in px; it should be one of the sizes. rem values are always relative to the 16px root, so a base of 18 does not rescale anything",
     },
     "signature": "The one deliberate, memorable choice and why it belongs to this subject.",
     "refusals": ["Three things this design will not use, each with its reason."],
@@ -169,12 +175,30 @@ def roles(spec, mode):
     r["focus"] = r["accent-text"]
     if spec["color"].get("focus") == "ink":  # when the accent is not the action colour
         r["focus"] = r["text"]
+    for name, value in (spec["color"].get("extra") or {}).items():
+        if not re.fullmatch(r"[a-z][a-z0-9-]*", name) or name in r:
+            sys.exit(f"design.json: color.extra name '{name}' must be lower-case letters, digits and hyphens, and not a role name.")
+        r[name] = extra_colour(name, value.get(mode, value.get("light")) if isinstance(value, dict) and ("light" in value or "dark" in value) else value)
     return r
+
+
+def extra_colour(name, value):
+    """A named colour from color.extra: a CSS colour string or {hue, chroma, lightness} in OKLCH."""
+    if isinstance(value, dict):
+        try:
+            return pick(value["lightness"], value["chroma"], value["hue"])
+        except KeyError:
+            sys.exit(f"design.json: color.extra '{name}' needs hue, chroma and lightness, or a CSS colour.")
+    col = parse_color(str(value)) if value is not None else None
+    if not col:
+        sys.exit(f"design.json: color.extra '{name}' is not a colour: {value!r}")
+    L, c, h = srgb_to_oklch(*col[:3])
+    return {"hex": to_hex(col), "rgb": tuple(col[:3]), "L": round(L, 3), "C": round(c, 4), "H": round(h, 1)}
 
 
 def type_tokens(spec):
     t = spec["type"]
-    base = t.get("base", 16)
+    base = ROOT_PX  # not t["base"]: that is the body size, and spacing and radii also assume the 16px root
     lead_t, lead_d = t["leading"]["text"], t["leading"]["display"]
     fluid_from = t.get("fluid_from")
     out = []
@@ -219,6 +243,18 @@ def shadows(kind, mode):
     return table[kind]
 
 
+def fonts(spec):
+    """Font roles: display, text and mono, plus any named under type.extra (a family string or a dict)."""
+    out = {k: v for k, v in spec["type"].items() if k in ("display", "text", "mono")}
+    for role, value in (spec["type"].get("extra") or {}).items():
+        if not re.fullmatch(r"[a-z][a-z0-9-]*", role) or role in out:
+            sys.exit(f"design.json: type.extra role '{role}' must be lower-case letters, digits and hyphens, and not display, text or mono.")
+        out[role] = value if isinstance(value, dict) else {"family": str(value)}
+        if not out[role].get("family") or out[role]["family"] == "REPLACE":
+            sys.exit(f"design.json: type.extra '{role}' needs a family.")
+    return out
+
+
 def build(spec):
     for p in ("name", "type.display.family", "type.text.family", "type.sizes", "type.leading.text", "type.leading.display",
               "color.neutral.hue", "color.neutral.chroma", "color.accent.hue", "color.accent.chroma", "color.accent.lightness",
@@ -231,8 +267,9 @@ def build(spec):
             "roles": {m: roles(spec, m) for m in modes}, "type": type_tokens(spec),
             "space": {str(s): spec["space"]["base"] * s for s in spec["space"]["steps"]},
             "radius": spec["radius"], "shadow": {m: shadows(spec["shadow"], m) for m in modes},
-            "motion": spec.get("motion", {}), "fonts": {k: v for k, v in spec["type"].items() if k in ("display", "text", "mono")},
-            "measure": spec["type"].get("measure", 66)}
+            "motion": spec.get("motion", {}), "fonts": fonts(spec),
+            "measure": spec["type"].get("measure", 66), "body": spec["type"].get("base"),
+            "extra": sorted((spec["color"].get("extra") or {}).keys())}
     second = spec["color"].get("second")
     if second:
         data["ramps"]["second"] = ramp(second["hue"], second["chroma"])
@@ -343,6 +380,11 @@ def report(data):
     o += ["## Type", "", md_table(["token", "px", "value", "line height", "tracking"],
                                  [[t["name"], t["px"], t["value"], t["line"], f"{t['track']}em"] for t in data["type"]]), ""]
     sizes = [t["px"] for t in data["type"]]
+    if data.get("body") and data["body"] not in sizes:
+        o.append(f"Note: type.base (the body size, {data['body']}px) is not one of the sizes. Add it, or set base to the body size you use.")
+    extra = [k for k in data["roles"][data["modes"][0]] if k in data.get("extra", [])]
+    if extra:
+        o.append("Extra colours: " + ", ".join(f"--{k} {data['roles'][data['modes'][0]][k]['hex']}" for k in extra) + ".")
     if len(sizes) > 9:
         o.append(f"Note: {len(sizes)} sizes. Product UI rarely needs more than 6 or 7; every extra size weakens the hierarchy.")
     acc = data["roles"][data["modes"][0]]["accent"]

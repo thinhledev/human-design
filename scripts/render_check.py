@@ -27,7 +27,14 @@ hierarchy is not obvious there, it is not obvious. --fold captures only the
 first screen. Tall pages are saved as several screenshots of about 1600px
 (--tile) so each one can be read; open them all. Fixed bars (a phone's bottom
 navigation) appear once per tile in tiled screenshots; that is the capture,
-not the design.
+not the design. Fixed elements parked outside the viewport (a closed drawer, a
+waiting toast) are hidden for full-page captures. Animations still running
+after --wait are jumped to their end before measuring, so screenshots show the
+settled page. Screenshots are named for the scheme the page actually drew: a
+dark-only page asked for light is saved as "-dark". Text inside SVG artwork is
+left out of the type counts. Under-12px text can be declared deliberate with
+"small-text" under "deliberate" in design.json (--identity, or a design.json
+next to the file).
 
 It talks only to the Chrome it starts, on 127.0.0.1, through the DevTools
 protocol; it sends nothing anywhere else. Needs Chrome, Chromium or Edge.
@@ -58,6 +65,22 @@ CANDIDATES = [
     r"C:\Program Files\Google\Chrome\Application\chrome.exe",
     r"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
 ]
+
+# Entrance animations and transitions still running after --wait are jumped to their end, so the
+# measurements and the screenshots show the settled page rather than a first frame. Endless ones keep running.
+SETTLE = r"""
+(document.getAnimations ? document.getAnimations() : []).forEach(a => {
+  try { const t = a.effect && a.effect.getComputedTiming(); if (t && isFinite(t.endTime)) a.finish(); } catch (e) {} });
+"""
+
+# Fixed elements parked outside the viewport (a closed drawer, a toast waiting below the fold) would show up
+# in a full-page capture, which enlarges the viewport. Hide them for the capture only.
+PARK = r"""
+(() => { let n = 0; for (const el of document.body.querySelectorAll('*')) { const s = getComputedStyle(el);
+  if (s.position !== 'fixed') continue; const r = el.getBoundingClientRect(); if (!r.width && !r.height) continue;
+  if (r.bottom <= 0 || r.top >= innerHeight || r.right <= 0 || r.left >= innerWidth) { el.style.setProperty('visibility', 'hidden', 'important'); n++; } }
+  return n; })()
+"""
 
 MEASURE = r"""
 (async () => {
@@ -93,13 +116,14 @@ MEASURE = r"""
     return ['monospace', 'serif', 'sans-serif'].some(g => Math.abs(w(q + ',' + g) - w(g)) > 0.5); };
   const generic = new Set(['serif','sans-serif','monospace','system-ui','ui-sans-serif','ui-serif','ui-monospace','ui-rounded','cursive','fantasy','-apple-system','blinkmacsystemfont','emoji','math']);
   const fam = {}, sizes = {}, weights = {}, colors = {}, low = [], overImage = [], measures = [], clipped = [];
-  let chars = 0, centered = 0, gradientText = 0;
+  let chars = 0, centered = 0, gradientText = 0, svgChars = 0;
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT);
   const seen = new Set();
   while (walker.nextNode()) {
     const tn = walker.currentNode, txt = tn.nodeValue.replace(/\s+/g, ' ').trim(); if (txt.length < 2) continue;
     const el = tn.parentElement; if (!el || seen.has(el) || !visible(el)) continue;
     if (['SCRIPT','STYLE','NOSCRIPT','TEMPLATE','OPTION'].includes(el.tagName)) continue;
+    if (el.closest('svg')) { svgChars += txt.length; continue; }  // labels inside artwork are drawing, not the type scale
     seen.add(el);
     const s = getComputedStyle(el), n = (el.innerText || txt).replace(/\s+/g, ' ').trim().length; if (!n) continue;
     chars += n;
@@ -121,7 +145,7 @@ MEASURE = r"""
       if (lines >= 3) measures.push({el: label(el), cpl: Math.round(n / lines), size: px, line: Math.round(parseFloat(s.lineHeight) / px * 100) / 100 || null}); }
     if ((s.overflow === 'hidden' || s.overflowY === 'hidden') && el.scrollHeight > el.clientHeight + 3 && s.webkitLineClamp === 'none' && clipped.length < 6) clipped.push({el: label(el), text: txt.slice(0, 40)});
   }
-  out.chars = chars;
+  out.chars = chars; out.svgChars = svgChars;
   const faceLoaded = name => { const n = name.toLowerCase(); try { if ([...document.fonts].some(f => f.family.replace(/["']/g, '').toLowerCase() === n && f.status === 'loaded')) return true; } catch (e) {} return fontOk(name); };
   out.families = Object.entries(fam).sort((a,b) => b[1]-a[1]).slice(0, 8).map(([name, n]) => ({name, share: n/chars, generic: generic.has(name.toLowerCase()), loaded: generic.has(name.toLowerCase()) ? true : faceLoaded(name)}));
   out.sizes = Object.entries(sizes).map(([k, n]) => [parseFloat(k), n/chars]).filter(([k, sh]) => sh > 0.005 || k >= 20).sort((a,b) => a[0]-b[0]);
@@ -134,12 +158,13 @@ MEASURE = r"""
   out.overImage = overImage; out.measures = measures.slice(0, 12); out.clipped = clipped;
   // boxes: spacing, radius, shadow, gradients, backgrounds
   const spacing = {}, radii = {}, shadows = new Set(), bgs = {}; let gradients = 0, boxes = 0, blur = 0;
-  for (const el of document.body.querySelectorAll('*')) { if (!visible(el)) continue; const s = getComputedStyle(el); boxes++;
+  for (const el of document.body.querySelectorAll('*')) { if (el.parentElement && el.parentElement.closest('svg')) continue;  // shapes inside artwork
+    if (!visible(el)) continue; const s = getComputedStyle(el); boxes++;
     for (const p of ['paddingTop','paddingRight','paddingBottom','paddingLeft','rowGap','columnGap','marginTop','marginBottom']) {
       const v = parseFloat(s[p]); if (v > 0 && v < 400) { const k = Math.round(v * 2) / 2; spacing[k] = (spacing[k] || 0) + 1; } }
     const r = s.borderTopLeftRadius; const rect = el.getBoundingClientRect();
     if (r && r !== '0px' && rect.width > 24) { const pill = parseFloat(r) >= Math.min(rect.width, rect.height) / 2 - 1; const k = pill ? 'pill' : r; radii[k] = (radii[k] || 0) + 1; }
-    if (s.boxShadow && s.boxShadow !== 'none') shadows.add(s.boxShadow);
+    if (s.boxShadow && s.boxShadow !== 'none') shadows.add(s.boxShadow.replace(/(rgba?|oklch|oklab|hsla?|color)\([^)]*\)|#[0-9a-f]{3,8}/gi, '').replace(/\s+/g, ' ').trim());
     if (/gradient\(/.test(s.backgroundImage) && rect.width > 40 && rect.height > 20) gradients++;
     if (s.backdropFilter && s.backdropFilter !== 'none') blur++;
     const c = rgba(s.backgroundColor); if (c[3] > 0.5 && rect.width * rect.height > 4000) { const k = hex(c); bgs[k] = (bgs[k] || 0) + rect.width * rect.height; } }
@@ -149,7 +174,7 @@ MEASURE = r"""
   out.backgrounds = Object.entries(bgs).sort((a,b) => b[1]-a[1]).slice(0, 6).map(([k]) => k);
   out.fills = out.backgrounds.slice();
   { const b = rgba(getComputedStyle(document.body).backgroundColor), h = rgba(getComputedStyle(document.documentElement).backgroundColor);
-    out.pageBackground = hex(b[3] > 0.5 ? b : (h[3] > 0.5 ? h : [1,1,1,1])); }
+    out.pageBackground = b[3] > 0.5 ? hex(b) : (h[3] > 0.5 ? hex(h) : (out.backgrounds[0] || '#ffffff')); }
   // overflow
   const sw = document.documentElement.scrollWidth; out.overflowX = sw > W + 1 ? sw - W : 0; out.overflowers = [];
   if (out.overflowX) for (const el of document.body.querySelectorAll('*')) { const r = el.getBoundingClientRect(); if (r.right > W + 1 && r.width > 0 && out.overflowers.length < 6 && visible(el)) { const s = getComputedStyle(el); if (s.position !== 'fixed') out.overflowers.push(label(el) + ' right=' + Math.round(r.right)); } }
@@ -352,25 +377,18 @@ def capture(cdp, session, url, width, scheme, a, out_dir, stem):
     cdp.call("Page.navigate", {"url": url}, session)
     loaded = cdp.wait_event("Page.loadEventFired", session, timeout=a.timeout)
     time.sleep(a.wait / 1000)
-    res = cdp.call("Runtime.evaluate", {"expression": f"window.__hdW = {int(width)};" + MEASURE, "awaitPromise": True,
+    res = cdp.call("Runtime.evaluate", {"expression": SETTLE + f"window.__hdW = {int(width)};" + MEASURE, "awaitPromise": True,
                                         "returnByValue": True}, session, timeout=40)
     if "exceptionDetails" in res:
         raise RuntimeError("measurement failed: " + str(res["exceptionDetails"].get("text")))
     facts = json.loads(res["result"]["value"])
     facts.update({"width": width, "scheme": scheme, "loaded": loaded, "surface": a.surface})
-    # animations that survive reduced motion
-    cdp.call("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme", "value": scheme},
-                                                          {"name": "prefers-reduced-motion", "value": "reduce"}]}, session)
-    time.sleep(0.25)
-    r2 = cdp.call("Runtime.evaluate", {"expression": "document.getAnimations ? document.getAnimations().filter(a => a.playState === 'running' "
-                                                     "&& a.effect && a.effect.getTiming().duration > 20 && a.effect.getKeyframes().some(k => "
-                                                     "['transform','translate','scale','rotate','left','top','right','bottom','width','height','margin',"
-                                                     "'backgroundPosition','offsetDistance'].some(p => p in k))).length : 0", "returnByValue": True}, session)
-    facts["animationsUnderReducedMotion"] = r2.get("result", {}).get("value", 0)
-    cdp.call("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme", "value": scheme},
-                                                          {"name": "prefers-reduced-motion", "value": "no-preference"}]}, session)
+    drawn = "dark" if luminance(facts.get("pageBackground") or "#ffffff") < 0.1 else "light"
+    facts["drawn"] = drawn  # screenshots are named for what was drawn: a dark-only page asked for light is "-dark"
     shots = []
     if out_dir:
+        if not a.fold:
+            facts["parkedFixed"] = cdp.call("Runtime.evaluate", {"expression": PARK, "returnByValue": True}, session).get("result", {}).get("value", 0)
         page_h = int(facts.get("pageHeight") or height)
         full_h = height if a.fold else min(page_h, a.max_height)
         if page_h > a.max_height and not a.fold:
@@ -385,7 +403,7 @@ def capture(cdp, session, url, width, scheme, a, out_dir, stem):
             clip = {"x": 0, "y": y, "width": width, "height": h, "scale": 1}
             png = cdp.call("Page.captureScreenshot", {"format": "png", "clip": clip, "captureBeyondViewport": True}, session, timeout=60)
             suffix = f"-{n}" if tile < full_h else ""
-            path = os.path.join(out_dir, f"{stem}-{width}-{scheme}{suffix}.png")
+            path = os.path.join(out_dir, f"{stem}-{width}-{drawn}{suffix}.png")
             with open(path, "wb") as fh:
                 fh.write(base64.b64decode(png["data"]))
             shots.append(path)
@@ -395,16 +413,36 @@ def capture(cdp, session, url, width, scheme, a, out_dir, stem):
             time.sleep(0.15)
             clip = {"x": 0, "y": 0, "width": width, "height": min(full_h, height * 2), "scale": 1}
             png = cdp.call("Page.captureScreenshot", {"format": "png", "clip": clip, "captureBeyondViewport": True}, session, timeout=60)
-            path = os.path.join(out_dir, f"{stem}-{width}-{scheme}-squint.png")
+            path = os.path.join(out_dir, f"{stem}-{width}-{drawn}-squint.png")
             with open(path, "wb") as fh:
                 fh.write(base64.b64decode(png["data"]))
             shots.append(path)
+    # animations that survive reduced motion; checked after the screenshots, because switching the media query
+    # restarts CSS animations and a screenshot taken afterwards shows their first frame
+    cdp.call("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme", "value": scheme},
+                                                          {"name": "prefers-reduced-motion", "value": "reduce"}]}, session)
+    time.sleep(0.25)
+    r2 = cdp.call("Runtime.evaluate", {"expression": "document.getAnimations ? document.getAnimations().filter(a => a.playState === 'running' "
+                                                     "&& a.effect && a.effect.getTiming().duration > 20 && a.effect.getKeyframes().some(k => "
+                                                     "['transform','translate','scale','rotate','left','top','right','bottom','width','height','margin',"
+                                                     "'backgroundPosition','offsetDistance'].some(p => p in k))).length : 0", "returnByValue": True}, session)
+    facts["animationsUnderReducedMotion"] = r2.get("result", {}).get("value", 0)
     facts["screenshots"] = shots
     return facts
 
 
-def findings(f):
-    """Turn measured facts into (severity, message) findings."""
+def luminance(hexv: str) -> float:
+    h = hexv.lstrip("#")
+    if len(h) != 6:
+        return 1.0
+    lin = [(c / 12.92 if c <= 0.04045 else ((c + 0.055) / 1.055) ** 2.4) for c in (int(h[i:i + 2], 16) / 255 for i in (0, 2, 4))]
+    return 0.2126 * lin[0] + 0.7152 * lin[1] + 0.0722 * lin[2]
+
+
+def findings(f, deliberate=None):
+    """Turn measured facts into (severity, message) findings. `deliberate` is design.json's "deliberate" table:
+    a key "small-text" with a reason turns the under-12px warning into a declared decision."""
+    deliberate = deliberate or {}
     out = []
     for fam in f["families"]:
         if not fam["loaded"] and fam["share"] > 0.01:
@@ -419,7 +457,16 @@ def findings(f):
         out.append(("warn", f"{len(sizes)} font sizes in use ({', '.join(f'{s:g}' for s in sizes)}px). A scale of 6 to 8 steps reads as a system; more reads as accident."))
     small = sum(share for s, share in f["sizes"] if s < 12)
     if small > 0.03:
-        out.append(("warn", f"{small:.0%} of the text is under 12px."))
+        if "small-text" in deliberate:
+            out.append(("info", f"{small:.0%} of the text is under 12px, declared deliberate: {deliberate['small-text'] or 'no reason given'}."))
+        else:
+            out.append(("warn", f"{small:.0%} of the text is under 12px (if that is a decision, record \"small-text\" with its reason "
+                                "under \"deliberate\" in design.json)."))
+    if f.get("svgChars"):
+        out.append(("info", f"{f['svgChars']} characters of text inside SVG artwork are left out of the type counts; check their size by eye."))
+    if f.get("drawn") and f["drawn"] != f["scheme"]:
+        out.append(("info", f"Asked for prefers-color-scheme: {f['scheme']}, the page drew a {f['drawn']} ground: it has one scheme. "
+                            f"Screenshots are named \"-{f['drawn']}\"."))
     if f["lowContrastCount"]:
         worst = f["lowContrast"][0]
         out.append(("error", f"{f['lowContrastCount']} text elements are under WCAG AA contrast, e.g. \"{worst['text']}\" "
@@ -499,7 +546,7 @@ def findings(f):
 
 def render(f, out):
     rank = {"error": 0, "warn": 1, "look": 2, "info": 3}
-    o = [f"## {f['width']}px, {f['scheme']}", ""]
+    o = [f"## {f['width']}px, {f['scheme']}" + (f" (drawn {f['drawn']})" if f.get("drawn", f["scheme"]) != f["scheme"] else ""), ""]
     if f["screenshots"]:
         o += ["Screenshots: " + ", ".join(f"`{p}`" for p in f["screenshots"]), ""]
     fams = ", ".join(f"{x['name']} {x['share']:.0%}" + ("" if x["loaded"] else " (NOT LOADED)") for x in f["families"] if x["share"] > 0.01)
@@ -534,8 +581,20 @@ def main(argv=None):
     ap.add_argument("--wait", type=int, default=600, help="ms to wait after load before measuring")
     ap.add_argument("--timeout", type=float, default=20.0, help="seconds to wait for the page to load")
     ap.add_argument("--chrome", help="path to Chrome, Chromium or Edge when it is not in a standard location")
+    ap.add_argument("--identity", help="design.json; its \"deliberate\" table can declare \"small-text\" (default: a design.json next to the file)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
+    ident = a.identity
+    if not ident and not re.match(r"^[a-z][a-z0-9+.-]*://", a.target, re.I):
+        beside = os.path.join(os.path.dirname(os.path.abspath(a.target)), "design.json")
+        ident = beside if os.path.isfile(beside) else None
+    deliberate = {}
+    if ident:
+        try:
+            with open(ident, encoding="utf-8") as fh:
+                deliberate = json.load(fh).get("deliberate", {}) or {}
+        except (OSError, ValueError) as e:
+            sys.exit(f"cannot read {ident}: {e}")
     chrome = find_chrome(a.chrome)
     if not chrome:
         sys.exit("No Chrome, Chromium or Edge found. Install one or pass --chrome PATH. Without a browser, open the page yourself, "
@@ -566,13 +625,13 @@ def main(argv=None):
     worst = 0
     if a.json:
         for f in results:
-            f["findings"] = findings(f)
+            f["findings"] = findings(f, deliberate)
             worst = max([worst] + [2 for s, _ in f["findings"] if s == "error"])
         print(json.dumps(results, indent=1))
         return worst
     print(f"# Render check: {a.target}\n")
     for f in results:
-        fs = findings(f)
+        fs = findings(f, deliberate)
         worst = max([worst] + [2 for s, _ in fs if s == "error"])
         print(render(f, fs) + "\n")
     print("Measured facts only. Open each screenshot and run the critique in references/critique.md: hierarchy, rhythm, "
