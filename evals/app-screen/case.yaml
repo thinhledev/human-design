@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: app-screen
+expected_outcome: |
+  The working folder contains DESIGN.md, design.json, tokens, a state sheet and index.html for Rootstock's Today screen. The identity comes from the nursery's world (plant labels, picking lists, the loading-bay board) and suits bright daylight and gloved hands on a tablet: large targets, high contrast, a dense but legible layout. The screen is organised around the manager's morning tasks (orders to pick and load by van and departure time, low or over-held stock, arrivals from propagation), uses realistic data (Latin names with cultivars, pot sizes, tray counts, bay codes) with tabular figures, and is not the four-stat-cards-plus-chart dashboard. Loading, empty and error states are designed, it works at desktop, tablet and phone widths without sideways scroll, slop_check.py --surface app reports no strong tells and fingerprint.py puts it under 75% for every default look.

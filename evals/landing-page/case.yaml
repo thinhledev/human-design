@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: landing-page
+expected_outcome: |
+  The working folder contains DESIGN.md, design.json, generated tokens, a directions file with three thumbnails, a state sheet and index.html for Ledgerline's landing page. DESIGN.md derives the identity from the subject (bookkeeping for physiotherapy clinics: ledgers, year-end packs, VAT, practice-management exports) with reasons that name the subject, a signature and refusals. The page uses chosen typefaces that load, a ground and accent with stated sources, real specific copy with the real price (29 pounds a month, 14-day trial, no card) and no invented customers, logos, ratings or numbers. It is not the centred-hero, three-card template, it has hover, focus-visible and pressed states, it works at phone and desktop widths, slop_check.py reports no strong tells, fingerprint.py puts it under 75% for every default look, and the agent rendered it at least twice and reports what changed.
