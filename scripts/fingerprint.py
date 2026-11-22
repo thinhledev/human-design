@@ -182,7 +182,7 @@ def extract(sources) -> dict:
                 continue
             if prop.startswith("--") and re.search(r"-(\d{2,3})$", prop):
                 continue  # ramp steps are raw material, not usage
-            if re.search(r"good|warn|bad|info|danger|success|error|alert|critical|positive|negative|caution|-ok\b",
+            if re.search(r"(?<![a-z])(?:good|warn(?:ing)?|bad|info|danger|success|errors?|alert|critical|positive|negative|caution|ok)(?![a-z])",
                          prop + " " + sel + " " + raw, re.I):
                 continue  # semantic colours (named so in the property, the selector or the token used) are not the brand's accent
             if prop == "color" and status_sel.search(sel):
