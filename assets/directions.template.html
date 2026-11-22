@@ -1,40 +1,26 @@
 <!doctype html>
-<!-- Three directions, one real screen. Copy this file, then give each frame its own decisions through the
-     custom properties on its .dir element: a different lead decision in each (type-led, colour-led,
-     layout-led or image-led), the same real content. No polish: these are thumbnails for choosing.
-     This file carries no look of its own. Run fingerprint.py on each direction's CSS before showing them. -->
+<!-- The board: three directions side by side, each in its own file (directions/a.html, b.html, c.html, made
+     from direction.template.html). Write one line per direction on what it bets on and what it gives up.
+     This file carries no look of its own. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Directions</title>
 <style>
-  body { margin: 0; padding: 24px; font: 14px/1.5 system-ui, sans-serif; background: #fff; color: #111; }
-  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 24px; }
+  body { margin: 0; padding: 24px; font: 14px/1.5 system-ui, sans-serif; background: Canvas; color: CanvasText; }
+  .board { display: grid; grid-template-columns: repeat(auto-fit, minmax(340px, 1fr)); gap: 24px; }
   figure { margin: 0; }
   figcaption { margin-top: 8px; }
   figcaption b { display: block; }
-  .dir { aspect-ratio: 4 / 3; overflow: hidden; border: 1px solid #ddd;
-         background: var(--bg); color: var(--text); font-family: var(--font-text); }
-  /* Write each direction's layout inside its own .dir; do not share component styles between them. */
+  iframe { width: 100%; aspect-ratio: 4 / 3; border: 1px solid GrayText; }
 </style>
 </head>
 <body>
 <div class="board">
-  <figure>
-    <div class="dir" id="a" style="--bg:; --text:; --accent:; --font-display:; --font-text:;">
-      <!-- the first screen, real copy -->
-    </div>
-    <figcaption><b>A. NAME</b>Bets on: … Gives up: …</figcaption>
-  </figure>
-  <figure>
-    <div class="dir" id="b" style="--bg:; --text:; --accent:; --font-display:; --font-text:;"></div>
-    <figcaption><b>B. NAME</b>Bets on: … Gives up: …</figcaption>
-  </figure>
-  <figure>
-    <div class="dir" id="c" style="--bg:; --text:; --accent:; --font-display:; --font-text:;"></div>
-    <figcaption><b>C. NAME</b>Bets on: … Gives up: …</figcaption>
-  </figure>
+  <figure><iframe src="directions/a.html" title="Direction A"></iframe><figcaption><b>A. NAME</b>Bets on: … Gives up: …</figcaption></figure>
+  <figure><iframe src="directions/b.html" title="Direction B"></iframe><figcaption><b>B. NAME</b>Bets on: … Gives up: …</figcaption></figure>
+  <figure><iframe src="directions/c.html" title="Direction C"></iframe><figcaption><b>C. NAME</b>Bets on: … Gives up: …</figcaption></figure>
 </div>
 </body>
 </html>

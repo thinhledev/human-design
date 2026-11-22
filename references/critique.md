@@ -6,7 +6,7 @@ step generated design skips, and the main reason it looks unconsidered.
 
 ## 1. The loop
 
-1. **Render**: `python3 scripts/render_check.py <file or URL> --out shots --widths 390,1440 --schemes light,dark --squint`.
+1. **Render**: `python3 scripts/render_check.py <file or URL> --out shots --widths 390,1440 --squint --surface <surface>` (add `--schemes light,dark` when the identity has two modes). Tall pages are saved as several screenshots; open every one.
 2. **Fix the measured problems first** (errors, then warnings): fonts that did not load, contrast, sideways scroll, squeezed columns, small targets, clipped text.
 3. **Open every screenshot and look.** Go through the questions below and write down what is wrong in plain words ("the price is the same weight as the plan name", "the left edge wobbles between sections").
 4. **Change the design**, not the notes. Fix the three worst things.
@@ -35,6 +35,8 @@ DESIGN.md under Taste.
 - Is the signature visible, and is everything around it quiet?
 - Does it follow DESIGN.md: faces, ground, accent rules, layout concept, refusals?
 - Place it beside the owner's other projects: would a stranger think the same person made both on the same day?
+- Is it merely correct? Plain, square and grey-green is a house style too. Is there one moment of warmth or wit from the subject's world (a crossed-out Sunday in a diary, a price written as a ledger entry) that someone would mention to a colleague?
+- Would anyone screenshot it?
 
 **Type**
 

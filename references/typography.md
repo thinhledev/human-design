@@ -11,13 +11,14 @@ inference.
 Choose for the subject, then check the practicalities. Never start from "what
 do I usually use".
 
+0. **See what is taken.** `python3 scripts/fingerprint.py --taken` lists the typefaces the owner's other projects already use. An unrelated product may not reuse one of them.
 1. **Write three words for the voice** from the brief (for example: exact, warm, unhurried). Reject any face that does not carry at least two of them at text size.
 2. **Look in the subject's world.** What do its documents, signs, packaging, instruments, tickets or screens look like? A railway timetable, a seed catalogue, a legal filing and a synth panel each imply different letterforms.
 3. **Text face first.** It carries 90% of the words. Test it at 14 to 16px in a real paragraph and a real table: x-height, the shapes of a, g, l, 1, 0, O, and whether it has tabular figures.
 4. **Then decide whether a second face is needed at all.** One family with weights, widths or optical sizes goes far (practice: practicaltypography.com/mixing-fonts.html; fonts.google.com/knowledge/choosing_type/pairing_typefaces). Add a display face only when headings need a voice the text face cannot give.
 5. **Give every face one job** and keep it: display, text, data or code. Most products tolerate two families; a third is usually a mono for real code or tabular data.
 6. **Check the licence and delivery**: where the files come from, whether self-hosting is allowed, WOFF2, the weights actually needed (two or three), a variable font when more.
-7. **Record the choice and the reason** in DESIGN.md, including the fallback stack.
+7. **Name three candidates and say why two lost.** At least one must come from the subject's own world (step 2), and at least one from outside the table below. Record the winner, the losers and the reason in DESIGN.md, with the fallback stack.
 
 Pairing that holds up (practice; Butterick and Google's guide disagree on how
 much contrast, so use judgement):
@@ -34,12 +35,21 @@ These are fine typefaces; the problem is that nobody chose them.
 | Default now | Inter, Geist, Space Grotesk, Instrument Serif, system-ui | Named by Anthropic as the generic look (claude.com/blog/improving-frontend-design-through-skills, vendor) and measured in a scan of about 1,500 Show HN pages (adriankrebs.ch/blog/design-slop/, 20 Apr 2026, single author) |
 | Default by reputation | Plus Jakarta Sans, Poppins, Outfit, Sora, Manrope, DM Sans, Montserrat, Playfair Display | Inference from template and tutorial use; no measurement found |
 | Becoming defaults | Bricolage Grotesque, IBM Plex, Source Sans 3, Newsreader, Crimson Pro, JetBrains Mono, Fraunces | Inference: the anti-generic prompts recommend exactly these, so generated work converges on them next |
+| Defaults of careful models | Atkinson Hyperlegible Next, Instrument Sans, Schibsted Grotesk, Besley, and a mono for labels | Observed in this skill's own benchmark (22 Nov 2026): three of four builds for two unrelated products chose Atkinson Hyperlegible Next, each with a plausible reason about legibility |
 
 Rule: a face from this table needs a reason in DESIGN.md that names the
-subject. "It is clean and modern" is not a reason. `fingerprint.py` and
-`slop_check.py` flag the first two rows.
+subject, and a note on which other candidates lost. "It is clean and modern"
+and "it is very legible" fit every product and are not reasons.
+`fingerprint.py` and `slop_check.py` flag the first two rows; `fingerprint.py
+--against` fails any face already used by another of the owner's projects.
 
-### Free faces worth knowing
+### Free faces: a map, not a menu
+
+This table exists to show the range of what is free, so a search starts wide.
+Do not pick from it by default: a list everyone draws from becomes the next
+set of defaults (it already happened in this skill's own tests). Search the
+catalogues themselves for the subject's vernacular: the kind of letter its
+labels, tickets, books or instruments use.
 
 All are SIL Open Font License unless noted, hosted on Google Fonts unless noted
 (verified in github.com/google/fonts metadata). Character notes are judgement.

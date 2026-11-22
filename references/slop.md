@@ -37,10 +37,20 @@ sans headline; monospace uppercase labels; 01 / 02 / 03 markers; the same
 name these (primary: github.com/anthropics/skills, frontend-design, commits of
 9 Jun and 3 Sep 2026). Each ban list so far has bred the next default.
 
-**Third: the lifeless.** Zero tells and still nothing there: correct,
-tasteful, interchangeable. No signature, no point of view, a mockup with one
-state per component, motion as decoration. No checker finds this; the
-critique does (`critique.md`).
+**Third: the careful.** Told to avoid both lists and to ground choices in the
+subject, a model still has a house style. In this skill's own benchmark (22
+November 2026), two builds for unrelated products made under the current
+design guidance shared a pale grey-green ground, dark green ink, an indigo or
+violet accent, monospace labels and hairline boxes; and two builds made with
+an earlier version of this skill shared one typeface, a blue accent, square
+corners and no shadows. Every one of those choices had a sensible reason
+attached. `fingerprint.py` catalogues the look ("sage paper and pine ink") and
+refuses a typeface or a ground and accent pair that another of the owner's
+projects already uses.
+
+**And the lifeless.** Zero tells and still nothing there: correct, tasteful,
+interchangeable, a form. No signature, no warmth, a mockup with one state per
+component. No checker finds this; the critique does (`critique.md`).
 
 ## 3. How common, and what people notice
 

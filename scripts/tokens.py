@@ -99,6 +99,7 @@ def pick(L, c, h):
 def ensure(fg, bg, target, hue, chroma, darker=True):
     """Move the lightness of fg until it reaches the target contrast on bg."""
     L = fg["L"]
+    target += 0.08  # margin for rounding to 8-bit hex
     for _ in range(60):
         if wcag_contrast(fg["rgb"], bg["rgb"]) >= target:
             break

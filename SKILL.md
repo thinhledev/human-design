@@ -67,15 +67,15 @@ Surface references: `marketing.md`, `web-app.md`, `desktop-app.md`, `mobile.md`,
 
 ## Workflow A: a new design
 
-1. **Brief.** Ask the questions in `identity.md` section 1 in one message (eight at most). Read `~/.human-design/taste.md` if it exists. Collect real content: copy, data, screenshots, photographs.
+1. **Brief.** Ask the questions in `identity.md` section 1 in one message (eight at most). Read `~/.human-design/taste.md` if it exists, and run `python3 scripts/fingerprint.py --taken` to see which typefaces, grounds and accents the owner's other projects already use. Collect real content: copy, data, screenshots, photographs. Before drawing, read only `identity.md`, the surface reference and `states-motion.md`; open the others when you reach that decision.
 2. **Existing system.** Look for a brand guide, tokens, a theme file, component styles, `DESIGN.md`. If there is one, record it and go to Workflow C.
-3. **World study.** Write the subject's materials, documents, colours with their sources, units and terms; look at three products in the category and note conventions to keep, habits to refuse, and one thing nobody does (`identity.md` section 2).
-4. **Three directions** for a new identity: three thumbnails of the same real first screen, each led by a different decision (`assets/directions.template.html`). Run `fingerprint.py` on each; drop any that lands on a default look. Show them with what each bets on and gives up; the owner picks.
+3. **World study.** Write the subject's materials, documents, colours with their sources, units and terms; look at up to three products in the category when their screens can be opened, and note conventions to keep, habits to refuse, and one thing nobody does (`identity.md` section 2).
+4. **Three directions** for a new identity: three thumbnails of the same real first screen, each led by a different decision and at least one warmer or bolder than your habit, one file each from `assets/direction.template.html`. Run `fingerprint.py` on each and `--compare` on the three; drop any that lands on a default look or clashes with a saved project. Show them with what each bets on and gives up; the owner picks.
 5. **Record the identity.** Fill `DESIGN.md` (from `assets/DESIGN.template.md`) and `design.json` (`python3 scripts/tokens.py --init design.json`), including the signature, three refusals and font licences. Generate tokens: `python3 scripts/tokens.py design.json --css tokens.css`. Fix any contrast failure it reports.
 6. **State sheet.** Copy `assets/state-sheet.template.html` beside the tokens and replace the samples with this project's components in every state, plus loading, empty and error for the main data view.
 7. **Screens.** Build the real screens from the tokens with real content, following the surface reference. Phone and desktop widths; both colour schemes if the identity has two.
-8. **Look and fix.** `python3 scripts/render_check.py <file or URL> --out shots --widths 390,1440 --schemes light,dark --squint`. Fix measured errors, open every screenshot, run the critique, change the design, render again. At least two rounds.
-9. **Check.** `python3 scripts/slop_check.py <paths> --identity design.json --surface <surface>` (no strong tells), then `python3 scripts/fingerprint.py <paths> --save <project> --against`.
+8. **Look and fix.** `python3 scripts/render_check.py <file or URL> --out shots --widths 390,1440 --squint --surface <surface>` (add `--schemes light,dark` when the identity has two modes). Fix measured errors, open every screenshot, run the critique, change the design, render again. At least two rounds.
+9. **Check.** `python3 scripts/slop_check.py <paths> --identity design.json --surface <surface>` (no strong tells), then `python3 scripts/fingerprint.py <paths> --against` (no default look at 75% or more, no clash with another project). When the owner accepts the design, save it with `--save <project>` so the next project can be checked against it; ask before the first save.
 10. **Hand over.** Show the screenshots and say what was decided and why in a few lines, what was checked, what is placeholder or unverified. Keep mockups, state sheet, `DESIGN.md` and `design.json` in the repository (for example in `design/`). Where the host can publish or preview HTML, publish the mockup there for the owner. Record their corrections under Taste.
 
 ## Workflow B: make an existing interface stop looking generated
@@ -107,11 +107,12 @@ Python 3.8 or newer, standard library only. Run them by path from the skill fold
 ```bash
 python3 scripts/tokens.py --init design.json                                   # starter identity file; replace every value
 python3 scripts/tokens.py design.json [--css F] [--tailwind F] [--json F] [--swift F] [--kotlin F]
-python3 scripts/render_check.py <file|URL> [--out shots] [--widths 390,1440] [--schemes light,dark] [--squint] [--fold] [--json] [--chrome PATH]
+python3 scripts/render_check.py <file|URL> [--out shots] [--widths 390,1440] [--schemes light,dark] [--squint] [--fold] [--surface S] [--tile 1600] [--json] [--chrome PATH]
 python3 scripts/slop_check.py <paths…> [--surface marketing|app|desktop|mobile|store] [--identity design.json] [--ignore ids] [--json]
 python3 scripts/slop_check.py --list                                           # the catalogue of tells, with fixes
-python3 scripts/fingerprint.py <paths…> [--save NAME] [--against] [--registry DIR] [--render shots.json] [--json]
-python3 scripts/fingerprint.py --compare <projectA> <projectB> […]
+python3 scripts/fingerprint.py <paths…> [--against] [--save NAME] [--same-brand] [--registry DIR] [--render shots.json] [--json]
+python3 scripts/fingerprint.py --taken                                         # what the owner's saved projects already use
+python3 scripts/fingerprint.py --compare <projectA> <projectB> […] [--same-brand]
 python3 scripts/contrast_check.py <fg> <bg> [--size 14] [--weight 400] [--fix] | --css tokens.css [--pairs text:bg …]
 ```
 
@@ -132,7 +133,7 @@ python3 scripts/contrast_check.py <fg> <bg> [--size 14] [--weight 400] [--fix] |
 - `references/handoff.md`: tokens into frameworks and native code, verifying the build
 - `references/sources.md`: sources, the studied references, licences, other design skills, what is unverified
 
-Assets: `assets/DESIGN.template.md`, `assets/state-sheet.template.html`, `assets/directions.template.html`. They carry structure only, no look.
+Assets: `assets/DESIGN.template.md`, `assets/state-sheet.template.html`, `assets/direction.template.html` (one per direction) and `assets/directions.template.html` (the board that shows three). They carry structure only, no look.
 
 ## Files, network access and safety
 
@@ -158,6 +159,14 @@ the centred hero with a pill and two buttons; three identical cards; invented
 proof; and, since anti-AI prompts spread, cream with a serif and terracotta,
 near-black with one neon, monospace labels and numbered markers on everything.
 
+What its own benchmark showed (22 November 2026, two briefs, four builds):
+designs made with the skill were more disciplined than those made with the
+host's default design guidance (6 type sizes against 13, spacing on the scale
+against half off it, targets large enough) and recorded their identity; they
+were also plainer, and without the registry check two of them shared a
+typeface. Hence the `--taken` and `--against` steps, and the warning about
+plainness in `identity.md`.
+
 What this skill cannot do: guarantee taste, replace a brand designer or user
 research, verify rendering in browsers other than Chrome, or judge
 photographs and illustration it cannot see. Its native-code tells are
@@ -170,3 +179,4 @@ inference from platform guidelines; it has no published false-positive rates.
 - If the reason for a choice would fit any product, it is not a reason.
 - Nobody has looked at it until someone has opened the screenshot.
 - One signature. Everything else quiet.
+- Careful and plain is a house style too. Check what is taken before choosing, and give restraint some warmth.

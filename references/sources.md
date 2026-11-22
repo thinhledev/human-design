@@ -104,7 +104,33 @@ signature. This skill addresses the first and the last (`slop_check.py`
 native checks; `fingerprint.py --against`); it has not yet published
 false-positive rates or a blind evaluation, and says so.
 
-## 5. Not verified (do not present as fact)
+## 5. This skill's own benchmark
+
+22 November 2026. Two briefs (a landing page for a bookkeeping tool for
+physiotherapy clinics; the main screen of a wholesale plant nursery app), each
+built twice by a fresh agent: once with the host's default design guidance and
+once with an earlier version of this skill, with the registry check disabled.
+Measured with this skill's own scripts, so treat it as a first look, not an
+independent evaluation.
+
+| | Default guidance, landing page | Default guidance, app | Skill, landing page | Skill, app |
+| --- | --- | --- | --- | --- |
+| Type sizes at 1440px | 13 | 7 | 6 | 4 |
+| Spacing off the 4px scale | 53% | 60% | 0% | 1% |
+| Measured errors | none | contrast, targets under 24px | none | none |
+| Identity recorded | no | no | yes | yes |
+| Ground and ink | pale grey-green, pine | pale grey-green, pine | pale grey-green, pine | white, neutral |
+| Accent | indigo | violet | blue | blue |
+| Text face | Instrument Sans | Atkinson Hyperlegible Next | Atkinson Hyperlegible Next | Atkinson Hyperlegible Next |
+
+Similarity between the two unrelated products: 50% with the default guidance,
+75% with the earlier version of the skill (same typeface, accent hue, radius
+and depth). The default-guidance pages had more visual personality; the skill
+pages were plainer. The findings led to the `--taken` step, the hard rules on
+shared typefaces and colours, the "sage paper and pine ink" look in the
+catalogue, and the warnings about habits and plainness in `identity.md`.
+
+## 6. Not verified (do not present as fact)
 
 - Material's own site (m3.material.io) could not be read; Material numbers come from Google's Android component documentation.
 - Fontshare's licence text; Velvetyne's licences; Behance's scraping clause.
