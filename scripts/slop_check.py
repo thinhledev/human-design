@@ -38,7 +38,8 @@ import sys
 from collections import Counter, defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import MARKUP_EXT, NATIVE_EXT, STYLE_EXT, class_tokens, collect, declarations, first_family, length_px, rel, visible_text  # noqa: E402
+from design_lib import (MARKUP_EXT, NATIVE_EXT, STYLE_EXT, class_tokens, collect, declarations, first_family, font_mentions,  # noqa: E402
+                        length_px, rel, visible_text)
 from fingerprint import extract, nearest_default  # noqa: E402
 
 DEFAULT_FONTS = {"inter", "inter variable", "inter tight", "geist", "geist sans", "geist variable", "roboto", "arial", "helvetica",
@@ -81,6 +82,9 @@ class Doc:
         self.all_text = " ".join(self.text.values())
         self.words = max(1, len(self.all_text.split()))
         self.fp = extract(sources) if sources else {}
+        self.fonts = [(s.path, line, first_family(val)) for s, _sel, prop, val, line, _at in self.decls
+                      if prop == "font-family" or prop.startswith("--font")]
+        self.fonts += [(s.path, line, fam) for s in sources for fam, line, _how in font_mentions(s)]
 
     def find(self, pattern, exts=None, flags=re.I, limit=6, text_only=False):
         rx = re.compile(pattern, flags) if isinstance(pattern, str) else pattern
@@ -119,36 +123,48 @@ def tell(tid, kind, strength, title, fix):
 @tell("type-default-face", "default", "strong", "The typeface is the framework or system default (Inter, Geist, Roboto, system-ui) or none was chosen",
       "Choose text and display faces for this subject and record why in DESIGN.md (references/typography.md).")
 def _(d):
-    fams = [(s.path, line, first_family(val)) for s, _sel, prop, val, line, _at in d.decls if prop == "font-family" or prop.startswith("--font")]
-    named = [f for f in fams if f[2] and f[2] not in ("inherit", "serif", "sans-serif", "monospace", "ui-monospace", "ui-sans-serif", "ui-serif")]
+    skip = ("inherit", "serif", "sans-serif", "monospace", "ui-monospace", "ui-sans-serif", "ui-serif", "")
+    named = [f for f in d.fonts if f[2] not in skip]
     custom = [f for f in named if f[2] not in DEFAULT_FONTS and "mono" not in f[2]]
     if custom:
         return []
     if named:
-        return [(p, l, f"font-family: {n}") for p, l, n in named[:4]]
+        return [(p, l, f"typeface: {n}") for p, l, n in named[:4]]
     if d.markup and (d.tw.get("font-sans") or sum(d.tw.values()) > 40 or d.decls):
         s = d.markup[0]
-        return [(s.path, 1, "no font-family anywhere: the browser or framework default is the design")]
+        return [(s.path, 1, "no typeface chosen anywhere: the browser or framework default is the design")]
     return []
 
 
 @tell("type-first-gen-display", "default", "weak", "Display face from the short list every generator reaches for (Space Grotesk, Plus Jakarta Sans, Poppins, Outfit, Sora, Manrope)",
       "Keep it only if the brief gives a reason; otherwise pick from the subject's world (references/typography.md).")
 def _(d):
-    return [(s.path, line, f"font-family: {first_family(val)}") for s, _sel, prop, val, line, _at in d.decls
-            if (prop == "font-family" or prop.startswith("--font")) and first_family(val) in FIRST_GEN_DISPLAY][:4]
+    return [(p, l, f"typeface: {n}") for p, l, n in d.fonts if n in FIRST_GEN_DISPLAY][:4]
 
 
 @tell("type-second-gen-display", "reaction", "weak", "Serif display face that anti-AI prompts now default to (Instrument Serif, Playfair Display, Fraunces, Cormorant)",
       "A serif is not a personality. Keep it only when the subject calls for it and the rest of the system is not the cream editorial default.")
 def _(d):
-    return [(s.path, line, f"font-family: {first_family(val)}") for s, _sel, prop, val, line, _at in d.decls
-            if (prop == "font-family" or prop.startswith("--font")) and first_family(val) in SECOND_GEN_DISPLAY][:4]
+    return [(p, l, f"typeface: {n}") for p, l, n in d.fonts if n in SECOND_GEN_DISPLAY][:4]
 
 
 @tell("type-gradient-text", "default", "strong", "Gradient-filled headline text", "Set headlines in a solid colour from the palette; let size, weight and the typeface carry emphasis.")
 def _(d):
     return (d.decl(r"(-webkit-)?background-clip", r"\btext\b") + d.cls(r"^(\w+:)*bg-clip-text$"))[:6]
+
+
+@tell("type-italic-accent-word", "reaction", "weak", "One italic serif word dropped into a sans headline",
+      "Emphasis by switching typeface mid-headline is the current tell. Let the sentence carry the emphasis.")
+def _(d):
+    return d.find(r"<h[12][^>]*>(?:(?!</h[12]>).){0,160}<(?:em|i|span)[^>]*(?:class(?:Name)?=[\"'{`][^\"'`>]*(?:italic|font-serif)[^\"'`>]*[\"'`}])?[^>]*>\s*[\w'-]+(?:\s+[\w'-]+){0,2}\s*</(?:em|i|span)>",
+                  flags=re.I | re.S)[:3] if d.find(r"<h[12][^>]*>(?:(?!</h[12]>).){0,160}<(?:em|i)\b|<h[12][^>]*>(?:(?!</h[12]>).){0,160}class(?:Name)?=[\"'{`][^\"'`>]*\b(?:italic|font-serif)\b", flags=re.I | re.S) else []
+
+
+@tell("type-accent-word", "default", "weak", "One headline word picked out in the accent colour",
+      "If one word matters most, write the headline so it lands on that word.")
+def _(d):
+    return d.find(r"<h[12][^>]*>(?:(?!</h[12]>).){0,160}<span[^>]*class(?:Name)?=[\"'{`][^\"'`>]*\btext-(?!white|black|inherit|current|foreground|muted)[a-z]+(?:-\d{2,3})?\b[^\"'`>]*[\"'`}][^>]*>\s*[\w'-]+(?:\s+[\w'-]+){0,2}\s*</span>",
+                  flags=re.I | re.S)[:3]
 
 
 @tell("type-eyebrow", "default", "weak", "Small uppercase letter-spaced label above headings, repeated as decoration",
@@ -380,6 +396,62 @@ def _(d):
                   r"Generated by create next app|content=[\"']v0\.(dev|app)[\"']|lovable-tagger|/vite\.svg|/next\.svg|gpt-engineer")[:5]
 
 
+@tell("meta-untouched-kit", "default", "strong", "The component kit's stock theme is untouched (default radius, neutral base colour, stock primary)",
+      "A kit is scaffolding. Replace its tokens with the project's own from design.json before building screens.")
+def _(d):
+    radius = d.decl(r"--radius", r"^0\.(5|625|75)rem$")
+    stock = d.decl(r"--primary", r"^(222\.2 47\.4% 11\.2%|240 5\.9% 10%|0 0% 9%|24 9\.8% 10%|oklch\(0\.20[58] 0(\.0\d+)? [\d.]+\)|221\.2 83\.2% 53\.3%)$")
+    return (stock + radius)[:4] if stock and radius else []
+
+
+@tell("layout-centred-hero", "default", "weak", "The stock hero: centred headline, one line of subtext, two buttons",
+      "Open with the most characteristic thing in the subject's world: the product working, a real example, a strong claim set off-centre.")
+def _(d):
+    return d.find(r"<(?:section|div|header)[^>]*class(?:Name)?=[\"'{`][^\"'`>]*\b(?:text-center|items-center)\b[^\"'`>]*[\"'`}][^>]*>(?:(?!</(?:section|header)>).){0,900}?<h1(?:(?!</(?:section|header)>).){0,500}?<p(?:(?!</(?:section|header)>).){0,700}?(?:<(?:a|button|Button|Link)\b(?:(?!</(?:section|header)>).){0,400}?){2}",
+                  flags=re.S)[:2]
+
+
+@tell("layout-pricing-trio", "default", "weak", "Three pricing tiers with the middle one ringed and labelled \"Most popular\"",
+      "Show the plans the business really has. If one plan fits most buyers, say who it fits instead of ringing it.")
+def _(d):
+    return d.find(r"most popular|recommended plan|best value", exts=MARKUP_EXT)[:3] if d.find(r"\bring-2\b|\bscale-105\b|border-2\s+border-\w+-500|\.popular|\.featured", limit=1) else []
+
+
+@tell("image-stock-effects", "default", "weak", "Stock effect components (spotlight, beams, meteors, border beam, marquee, aurora, number ticker)",
+      "Effects that ship in a component gallery appear on thousands of sites. Remove them or build one effect that belongs to the subject.")
+def _(d):
+    return d.find(r"\b(Spotlight|BackgroundBeams|Meteors|BorderBeam|NumberTicker|AuroraBackground|ShineBorder|AnimatedGradientText|SparklesCore|"
+                  r"BackgroundGradient|LampContainer|WavyBackground|ShootingStars|Particles|DotPattern|GridPattern|RetroGrid|TypewriterEffect)\b", flags=0)[:5]
+
+
+@tell("image-worn-icons", "default", "weak", "The same handful of icons every generated page uses (sparkles, zap, rocket, shield, brain, bar chart)",
+      "Pick icons for what they denote in this product, or use none.")
+def _(d):
+    hits = d.find(r"\b(Sparkles|Zap|Rocket|ShieldCheck|Shield|Brain|BarChart3|Lightbulb|Target|Globe|Layers)\b(?=\s*[,}/]|\s+className|\s+size)", flags=0)
+    names = {h[2].strip() for h in hits}
+    return hits[:5] if len(names) >= 4 else []
+
+
+@tell("image-pulsing-dot", "default", "weak", "A pulsing dot as a \"live\" or \"online\" badge", "Show status with a word. Pulse only something that is really changing.")
+def _(d):
+    return d.find(r"class(?:Name)?=[\"'{`][^\"'`>]*\banimate-(?:ping|pulse)\b[^\"'`>]*\brounded-full\b|class(?:Name)?=[\"'{`][^\"'`>]*\brounded-full\b[^\"'`>]*\banimate-(?:ping|pulse)\b")[:3]
+
+
+@tell("code-section-comments", "default", "weak", "Section-label comments in the markup (Hero Section, Features Section, CTA Section)",
+      "They mark a page assembled from a template order. Name components by what they contain.")
+def _(d):
+    hits = d.find(r"\{/\*\s*(Hero|Features?|Pricing|CTA|Footer|Testimonials?|FAQ|Stats|Header|Navigation)( Section)?\s*\*/\}|<!--\s*(Hero|Features?|Pricing|CTA|Testimonials?|FAQ|Stats)( Section)?\s*-->")
+    return hits[:4] if len(hits) >= 4 else []
+
+
+@tell("code-no-tokens", "craft", "weak", "Colours written as raw palette classes or hex values everywhere: no tokens",
+      "Generate tokens from design.json (tokens.py) and use roles (bg, surface, text, accent), so one decision changes one place.")
+def _(d):
+    raw = d.cls(r"(?:^|:)(?:bg|text|border|ring|from|to|via)-(?:red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-\d{2,3}(?:/\d+)?$")
+    tokens = d.find(r"var\(--|@theme\b|--color-|bg-(background|foreground|primary|surface|accent|muted)\b", limit=1)
+    return raw[:4] if len(raw) >= 40 and not tokens else []
+
+
 # ------------------------------------------------------------------ copy
 @tell("copy-stock-words", "copy", "weak", "Stock marketing vocabulary (elevate, seamless, supercharge, unlock, effortless)",
       "Say the concrete thing the product does, for whom, with a number or example if you have a true one (references/copy.md).")
@@ -424,11 +496,11 @@ def _(d):
 def _(d):
     out = []
     for path, text in d.text.items():
-        for rx in (r"\S+ \u2014 \S+|\S+\u2014\S+", r"\b(it'?s |this is |we'?re )?not just [^.]{3,40}[,;] (but|it'?s)\b", r"\b(isn'?t|is not) (just )?(about )?[^.]{3,40}[.;,] it'?s\b",
+        for rx in (r"\S+ \u2014 \S+", r"\b(it'?s |this is |we'?re )?not just [^.]{3,40}[,;] (but|it'?s)\b", r"\b(isn'?t|is not) (just )?(about )?[^.]{3,40}[.;,] it'?s\b",
                    r"\b[A-Z][a-z]+\. [A-Z][a-z]+\. [A-Z][a-z]+\.(?= |$)", r"\bthe result\? |\bthe best part\? |\bhere'?s the thing\b"):
             for m in re.finditer(rx, text):
                 out.append((path, 0, text[max(0, m.start() - 15):m.end() + 15].strip()))
-    return out[:6] if len(out) >= 2 else []
+    return out[:6] if len(out) >= 3 else []
 
 
 @tell("copy-title-case", "copy", "weak", "Headings In Title Case Throughout", "Use sentence case for headings and buttons unless the brand's style guide says otherwise.")
@@ -442,6 +514,23 @@ def _(d):
         return len(words) >= 3 and sum(w[0].isupper() for w in words) / len(words) >= 0.8
     hits = [h for h in heads if titled(h[2])]
     return hits[:5] if len(heads) >= 4 and len(hits) / len(heads) >= 0.6 else []
+
+
+@tell("copy-template-chrome", "reaction", "weak", "Template chrome: middot-separated fragments, arrows glued to every button, spaced-dash kickers",
+      "Chrome like \"Design · Build · Ship\" and trailing arrows is decoration posing as content. Cut it.")
+def _(d):
+    out = []
+    for path, text in d.text.items():
+        for rx in (r"\b\w+ · \w+ · \w+", r"\b[A-Z]{3,}(?: [A-Z]{2,})? — \w+", r"[A-Za-z] ?→(?= |$)"):
+            for m in re.finditer(rx, text):
+                out.append((path, 0, text[max(0, m.start() - 12):m.end() + 12].strip()))
+    return out[:5] if len(out) >= 3 else []
+
+
+@tell("copy-any-product-headline", "copy", "weak", "A headline that would fit any product", "Name the thing, the person and the result. If a competitor could use the sentence unchanged, rewrite it.")
+def _(d):
+    return d.find(r"<h1[^>]*>\s*(?:<[^>]+>\s*)*(?:[^<]{0,60}\b(faster|smarter|better|without limits|the future of|made simple|made easy|reimagined|for modern teams|"
+                  r"that works for you|your \w+, (simplified|supercharged|reimagined)|build \w+ faster|ship faster|work smarter)\b[^<]{0,40})", flags=re.I)[:3]
 
 
 # ------------------------------------------------------------------ dead interface
@@ -500,6 +589,15 @@ def _(d):
     return hits[:4] if len(hits) >= 3 else []
 
 
+@tell("dead-toy-motion", "dead", "weak", "Count-up numbers, typewriter headlines, bouncing or elastic easing",
+      "Motion that performs for the visitor delays the content. Show the number; ease out, do not bounce.")
+def _(d):
+    hits = d.find(r"\b(CountUp|NumberTicker|Typewriter|TypeAnimation|typed\.js|react-countup|AnimatedCounter)\b", flags=0)
+    hits += d.cls(r"(?:^|:)animate-bounce$")
+    hits += d.decl(r"(transition|animation)(-timing-function)?", r"cubic-bezier\(\s*[\d.]+\s*,\s*(-\d|1\.[2-9]|[2-9])")
+    return hits[:4]
+
+
 @tell("dead-no-data-states", "dead", "weak", "Data screens with no loading, empty or error state", "Design all four: loading (a skeleton shaped like the content), empty, error, and partial.")
 def _(d):
     if d.surface not in ("app", "desktop", "mobile", "store"):
@@ -529,7 +627,8 @@ def _(d):
       "Replace the starter theme with the project's own colour roles (tokens.py --kotlin or --swift).")
 def _(d):
     return d.find(r"\bPurple(80|40|GreyDark|Grey80|Grey40)\b|\bPink(80|40)\b|0xFF6200EE|0xFF3700B3|0xFFBB86FC|0xFF03DAC[56]|"
-                  r"LinearGradient\([^)]*\[\s*\.(purple|blue|indigo|pink)\s*,\s*\.(purple|blue|indigo|pink)", exts=NATIVE_EXT)[:5]
+                  r"LinearGradient\([^)]*\[\s*\.(purple|blue|indigo|pink)\s*,\s*\.(purple|blue|indigo|pink)|"
+                  r"Brush\.(linear|horizontal|vertical)Gradient\(\s*(colors\s*=\s*)?listOf\(\s*Color\((0xFF)?(6366F1|8B5CF6|7C3AED|A855F7|667EEA)", exts=NATIVE_EXT)[:5]
 
 
 @tell("native-uniform-cards", "default", "weak", "Every native card has the same large corner radius and a shadow",
@@ -545,6 +644,16 @@ def _(d):
 def _(d):
     return d.find(r"line\.3\.horizontal|Icons\.(Default|Filled|Rounded)\.Menu\b.*(Drawer|drawer)|navigationBarBackButtonHidden\(true\)|"
                   r"\.toolbar\(\.hidden, for: \.tabBar\)", exts=NATIVE_EXT)[:4]
+
+
+@tell("native-emoji-text", "default", "strong", "Emoji as icons in native views", "Use SF Symbols on Apple platforms and Material Symbols on Android, or the product's own icons.")
+def _(d):
+    out = []
+    for s in d.native:
+        for m in re.finditer(r"Text\(\s*\"[^\"]*\"", s.text):
+            if EMOJI.search(m.group(0)):
+                out.append((s.path, s.line_of(m.start()), m.group(0)[:60]))
+    return out[:5] if len(out) >= 2 else []
 
 
 # ------------------------------------------------------------------ whole-look checks
@@ -620,7 +729,8 @@ def main(argv=None):
         print(json.dumps({"files": len(d.sources), "strong": len(strong), "tells": found, "declared": declared, "fingerprint": d.fp}, indent=1))
         return 2 if strong else 0
     o = [f"# Tell check: {len(d.sources)} files", "",
-         f"{len(found)} tells ({len(strong)} strong)" + (f", {len(declared)} declared deliberate" if declared else "") + ".", ""]
+         f"{len(found)} tells ({len(strong)} strong)" + (f", {len(declared)} declared deliberate" if declared else "") + ". "
+         "One weak tell means little; a design reads as generated when several stack up.", ""]
     labels = {"default": "Defaults nobody decided", "reaction": "Reactions that became defaults", "dead": "Dead interface", "copy": "Copy", "craft": "Craft"}
     for kind, label in labels.items():
         items = [f for f in found if f["kind"] == kind]

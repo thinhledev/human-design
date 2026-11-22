@@ -347,6 +347,39 @@ def visible_text(src: Source) -> str:
     return re.sub(r"\s+", " ", t)
 
 
+_NEXT_FONT = re.compile(r"""import\s*\{([^}]+)\}\s*from\s*["']next/font/google["']""")
+_GEIST = re.compile(r"""from\s*["']geist/font(?:/(sans|mono))?["']|\bGeist(Sans|Mono)\b""")
+_GFONT_URL = re.compile(r"fonts\.googleapis\.com/css2?\?([^\"'\s>)]+)")
+_FONTSOURCE = re.compile(r"""["']@fontsource(?:-variable)?/([a-z0-9-]+)""")
+_TW_FAMILY = re.compile(r"""\b(sans|serif|mono|display|heading|body)\s*:\s*\[\s*["']([^"']+)["']""")
+_NATIVE_FONT = re.compile(r"""\.custom\(\s*"([^"]+)"|Font\(\s*R\.font\.([a-z0-9_]+)|fontFamily:\s*['"]([^'"]+)['"]""")
+
+
+def font_mentions(src: Source):
+    """Yield (family, line, how) for typefaces named outside CSS declarations: next/font imports, the geist
+    package, Google Fonts URLs, Fontsource packages, Tailwind config font families and native font calls."""
+    t = src.text
+    for m in _NEXT_FONT.finditer(t):
+        for name in m.group(1).split(","):
+            name = name.split(" as ")[0].strip()
+            if name:
+                yield re.sub(r"_", " ", name).lower(), src.line_of(m.start()), "next/font"
+    for m in _GEIST.finditer(t):
+        yield "geist mono" if "mono" in m.group(0).lower() else "geist", src.line_of(m.start()), "geist package"
+    for m in _GFONT_URL.finditer(t):
+        for fam in re.findall(r"family=([^:&]+)", m.group(1)):
+            yield fam.replace("+", " ").replace("%20", " ").lower(), src.line_of(m.start()), "Google Fonts link"
+    for m in _FONTSOURCE.finditer(t):
+        yield m.group(1).replace("-", " "), src.line_of(m.start()), "fontsource"
+    if "tailwind.config" in src.path or "fontFamily" in t:
+        for m in _TW_FAMILY.finditer(t):
+            yield m.group(2).lower(), src.line_of(m.start()), "tailwind config"
+    if src.ext in NATIVE_EXT:
+        for m in _NATIVE_FONT.finditer(t):
+            name = next(g for g in m.groups() if g)
+            yield re.sub(r"[-_](regular|bold|medium|semibold|light|italic|variable).*$", "", name, flags=re.I).replace("_", " ").lower(), src.line_of(m.start()), "native"
+
+
 def first_family(value: str) -> str:
     """First concrete family name of a font-family value, lower-cased, without quotes."""
     for part in value.split(","):

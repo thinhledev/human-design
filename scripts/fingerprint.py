@@ -34,7 +34,7 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import (class_tokens, collect, declarations, first_family, hue_name, length_px, md_table,  # noqa: E402
+from design_lib import (class_tokens, collect, declarations, first_family, font_mentions, hue_name, length_px, md_table,  # noqa: E402
                         parse_color, srgb_to_oklch)
 
 GENERIC = {"serif", "sans-serif", "monospace", "system-ui", "ui-sans-serif", "ui-serif", "ui-monospace", "ui-rounded",
@@ -111,6 +111,11 @@ def extract(sources) -> dict:
     centred = text_align = gradient = glass = cols3 = mono_small = 0
     tw = Counter()
     for src in sources:
+        for fam, _line, how in font_mentions(src):
+            if fam and fam not in GENERIC:
+                fams[fam] += 2
+                if how in ("next/font", "geist package", "tailwind config") and "mono" not in fam:
+                    body[fam] += 1
         for sel, prop, val, _line, _at in declarations(src):
             low = val.lower()
             if prop in ("font-family", "--font-sans", "--font-display", "--font-serif", "--font-heading", "--font-body", "--font-text",
