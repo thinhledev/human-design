@@ -1,0 +1,77 @@
+<!doctype html>
+<!-- State sheet. Copy next to the project's tokens.css, replace the sample controls with the project's
+     real components, and draw every state before building screens. This file carries no look of its
+     own: every colour, size, radius and duration comes from tokens.css (generated from design.json). -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>State sheet</title>
+<!-- Load the project's typefaces here (a font link or @font-face), or render_check.py will report them as not loaded. -->
+<link rel="stylesheet" href="tokens.css">
+<style>
+  body { margin: 0; padding: var(--space-8); background: var(--bg); color: var(--text);
+         font: var(--text-2)/var(--text-2-line) var(--font-text); }
+  h1 { font: var(--text-4)/var(--text-4-line) var(--font-display); margin: 0 0 var(--space-6); }
+  h2 { font-size: var(--text-1); color: var(--text-muted); font-weight: 600; margin: var(--space-8) 0 var(--space-3); }
+  .row { display: flex; flex-wrap: wrap; gap: var(--space-6); align-items: flex-start; }
+  .cell { display: grid; gap: var(--space-2); justify-items: start; }
+  .cell small { color: var(--text-muted); font-size: var(--text-0); }
+
+  /* Replace from here with the project's own component styles. The states are the point. */
+  .btn { font: inherit; padding: var(--space-2) var(--space-4); border: 1px solid transparent; border-radius: var(--radius-md);
+         background: var(--accent); color: var(--on-accent); cursor: pointer;
+         transition: background-color var(--dur-fast) ease, transform var(--dur-press) var(--ease-out); }
+  .btn:hover, .btn.is-hover { background: var(--accent-hover); }
+  .btn:focus-visible, .btn.is-focus { outline: 2px solid var(--focus); outline-offset: 2px; }
+  .btn:active:not(:disabled):not([aria-busy="true"]), .btn.is-pressed { transform: scale(.97); }
+  .btn[aria-busy="true"] { cursor: progress; }
+  .btn:disabled { background: var(--sunken); color: var(--text-subtle); cursor: not-allowed; }
+  .spin { display: inline-block; width: 1em; height: 1em; margin-right: .5em; vertical-align: -.125em; border-radius: 50%;
+          border: 2px solid currentColor; border-right-color: transparent; animation: spin .7s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .field { font: inherit; padding: var(--space-2) var(--space-3); border: 1px solid var(--border-strong); border-radius: var(--radius-sm);
+           background: var(--surface); color: var(--text); }
+  .field:focus-visible, .field.is-focus { outline: 2px solid var(--focus); outline-offset: 1px; }
+  .field[aria-invalid="true"] { border-color: var(--bad); }
+  .msg { color: var(--bad); font-size: var(--text-1); }
+  .panel { width: 18rem; min-height: 9rem; padding: var(--space-4); border: 1px solid var(--border); border-radius: var(--radius-md); background: var(--surface); }
+  .sk { position: relative; overflow: hidden; height: .9em; margin: .5em 0; background: var(--sunken); border-radius: var(--radius-sm); }
+  .sk::after { content: ""; position: absolute; inset: 0; transform: translateX(-100%);
+               background: linear-gradient(90deg, transparent, var(--surface), transparent); animation: sweep 1.4s ease-in-out infinite; }
+  @keyframes sweep { to { transform: translateX(100%); } }
+  @media (prefers-reduced-motion: reduce) { .spin, .sk::after { animation: none; } .btn { transition: none; } }
+</style>
+</head>
+<body>
+<h1>State sheet: PROJECT</h1>
+
+<h2>Primary action</h2>
+<div class="row">
+  <div class="cell"><button class="btn">Save changes</button><small>rest</small></div>
+  <div class="cell"><button class="btn is-hover">Save changes</button><small>hover</small></div>
+  <div class="cell"><button class="btn is-focus">Save changes</button><small>focus-visible</small></div>
+  <div class="cell"><button class="btn is-pressed">Save changes</button><small>pressed</small></div>
+  <div class="cell"><button class="btn" aria-busy="true"><span class="spin"></span>Saving…</button><small>busy (not faded)</small></div>
+  <div class="cell"><button class="btn">Saved</button><small>done, 1.2s</small></div>
+  <div class="cell"><button class="btn" disabled>Save changes</button><small>disabled (say why nearby)</small></div>
+</div>
+
+<h2>Text field</h2>
+<div class="row">
+  <div class="cell"><input class="field" aria-label="Studio name" value=""><small>empty</small></div>
+  <div class="cell"><input class="field is-focus" aria-label="Studio name" value="Kiln"><small>focus</small></div>
+  <div class="cell"><input class="field" aria-label="Studio name" value="Kilnfolk Studio"><small>filled</small></div>
+  <div class="cell"><input class="field" aria-label="Email" aria-invalid="true" value="ana@"><span class="msg">Enter the full address, like ana@studio.example.</span><small>invalid</small></div>
+  <div class="cell"><input class="field" aria-label="Plan" value="Studio plan" disabled><small>disabled</small></div>
+</div>
+
+<h2>Data view (replace with the project's main list or panel)</h2>
+<div class="row">
+  <div class="cell"><div class="panel"><div class="sk" style="width:60%"></div><div class="sk"></div><div class="sk" style="width:85%"></div><div class="sk" style="width:40%"></div></div><small>loading: shaped like the content</small></div>
+  <div class="cell"><div class="panel">No classes yet. Classes you schedule appear here with their bookings.<br><br><button class="btn">Schedule a class</button></div><small>empty: what, why, the one action</small></div>
+  <div class="cell"><div class="panel"><span class="msg">Could not load classes.</span> Your bookings are safe. <br><br><button class="btn">Try again</button></div><small>error: what failed, what still holds</small></div>
+  <div class="cell"><div class="panel">3 of 5 classes loaded. The rest are still syncing.</div><small>partial</small></div>
+</div>
+</body>
+</html>

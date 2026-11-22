@@ -34,7 +34,7 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import (class_tokens, collect, declarations, first_family, font_mentions, hue_name, length_px, md_table,  # noqa: E402
+from design_lib import (class_tokens, collect, declarations, family_of, font_mentions, hue_name, length_px, md_table,  # noqa: E402
                         parse_color, srgb_to_oklch)
 
 GENERIC = {"serif", "sans-serif", "monospace", "system-ui", "ui-sans-serif", "ui-serif", "ui-monospace", "ui-rounded",
@@ -118,16 +118,13 @@ def extract(sources) -> dict:
                     body[fam] += 1
         for sel, prop, val, _line, _at in declarations(src):
             low = val.lower()
-            if prop in ("font-family", "--font-sans", "--font-display", "--font-serif", "--font-heading", "--font-body", "--font-text",
-                        "--font-mono") or (prop == "font" and "," in val):
-                fam = first_family(val.split("/")[-1] if prop == "font" else val)
-                fam = re.sub(r"^\d+(px|rem|em)\s+", "", fam)
-                if fam and fam not in GENERIC:
-                    fams[fam] += 1
-                    if DISPLAY_SEL.search(sel) or "display" in prop or "heading" in prop:
-                        display[fam] += 2
-                    if BODY_SEL.search(sel) or prop in ("--font-sans", "--font-body", "--font-text"):
-                        body[fam] += 2
+            fam = family_of(prop, val)
+            if fam and fam not in GENERIC:
+                fams[fam] += 1
+                if DISPLAY_SEL.search(sel) or "display" in prop or "heading" in prop:
+                    display[fam] += 2
+                if BODY_SEL.search(sel) or prop in ("--font-sans", "--font-body", "--font-text"):
+                    body[fam] += 2
             for m in re.finditer(r"#[0-9a-fA-F]{3,8}\b|(?:rgba?|hsla?|oklch|oklab)\([^)]*\)", val):
                 col = parse_color(m.group(0))
                 if not col or col[3] < 0.5:
@@ -288,10 +285,11 @@ def similarity(a: dict, b: dict):
         if a[key] == b[key] and a[key] != "unknown":
             score += WEIGHTS[key]
             shared.append(labelf.format(a[key]))
-    total += WEIGHTS["ratio"]
-    if a.get("ratio") and b.get("ratio") and abs(a["ratio"] - b["ratio"]) <= 0.03:
-        score += WEIGHTS["ratio"]
-        shared.append(f"type-scale ratio about {a['ratio']}")
+    if a.get("ratio") and b.get("ratio"):
+        total += WEIGHTS["ratio"]
+        if abs(a["ratio"] - b["ratio"]) <= 0.03:
+            score += WEIGHTS["ratio"]
+            shared.append(f"type-scale ratio about {a['ratio']}")
     for key, name in (("centred", "mostly centred text"), ("gradient", "gradient fills"), ("glass", "blurred glass"),
                       ("mono_labels", "monospace labels")):
         total += WEIGHTS[key]

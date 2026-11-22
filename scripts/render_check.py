@@ -103,6 +103,7 @@ MEASURE = r"""
     const px = Math.round(parseFloat(s.fontSize) * 10) / 10; sizes[px] = (sizes[px] || 0) + n;
     weights[s.fontWeight] = (weights[s.fontWeight] || 0) + n;
     if (s.textAlign === 'center' || s.textAlign === '-webkit-center') centered += n;
+    if (el.closest(':disabled, [aria-disabled="true"], [inert]')) continue;
     const clip = s.webkitBackgroundClip === 'text' || s.backgroundClip === 'text';
     if (clip) { gradientText += 1; continue; }
     const fg = rgba(s.color), bg = bgOf(el), eff = over(fg, bg.color), r = ratio(eff, bg.color);

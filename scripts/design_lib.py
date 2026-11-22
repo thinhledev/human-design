@@ -389,6 +389,20 @@ def first_family(value: str) -> str:
     return ""
 
 
+_FONT_SHORTHAND = re.compile(r"(?:^|\s)(?:\d*\.?\d+(?:px|rem|em|pt|%)|var\([^)]*\)|clamp\([^)]*\)|(?:xx?-)?small|medium|(?:x+-)?large|smaller|larger)"
+                             r"(?:\s*/\s*(?:var\([^)]*\)|[^\s,]+))?\s+(.+)$", re.I)
+
+
+def family_of(prop: str, value: str) -> str:
+    """The first concrete family named by a font-family, --font-* or font shorthand declaration ('' when none)."""
+    if prop == "font-family" or prop.startswith("--font"):
+        return first_family(value)
+    if prop == "font":
+        m = _FONT_SHORTHAND.search(value.strip())
+        return first_family(m.group(1)) if m else ""
+    return ""
+
+
 def length_px(value: str, base: float = 16.0):
     """Parse a single CSS length into px (rem and em use the base). None when not a plain length."""
     m = re.fullmatch(r"\s*(-?\d*\.?\d+)(px|rem|em|pt)?\s*", value.strip().lower())

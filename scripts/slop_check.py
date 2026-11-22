@@ -38,8 +38,8 @@ import sys
 from collections import Counter, defaultdict
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import (MARKUP_EXT, NATIVE_EXT, STYLE_EXT, class_tokens, collect, declarations, first_family, font_mentions,  # noqa: E402
-                        length_px, rel, visible_text)
+from design_lib import (MARKUP_EXT, NATIVE_EXT, STYLE_EXT, class_tokens, collect, declarations, family_of, first_family,  # noqa: E402,F401
+                        font_mentions, length_px, rel, visible_text)
 from fingerprint import extract, nearest_default  # noqa: E402
 
 DEFAULT_FONTS = {"inter", "inter variable", "inter tight", "geist", "geist sans", "geist variable", "roboto", "arial", "helvetica",
@@ -82,8 +82,7 @@ class Doc:
         self.all_text = " ".join(self.text.values())
         self.words = max(1, len(self.all_text.split()))
         self.fp = extract(sources) if sources else {}
-        self.fonts = [(s.path, line, first_family(val)) for s, _sel, prop, val, line, _at in self.decls
-                      if prop == "font-family" or prop.startswith("--font")]
+        self.fonts = [(s.path, line, family_of(prop, val)) for s, _sel, prop, val, line, _at in self.decls if family_of(prop, val)]
         self.fonts += [(s.path, line, fam) for s in sources for fam, line, _how in font_mentions(s)]
 
     def find(self, pattern, exts=None, flags=re.I, limit=6, text_only=False):
