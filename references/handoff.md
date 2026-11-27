@@ -14,7 +14,7 @@ python3 scripts/tokens.py design.json --swift Tokens.swift --kotlin Tokens.kt
 ```
 
 - Edit `design.json`, regenerate, commit both. Never hand-edit generated files.
-- Components use roles (`--bg`, `--surface`, `--text`, `--text-muted`, `--accent`, `--border`), never ramp steps or literal colours. Ramps exist for charts and rare one-offs.
+- Components use roles (`--bg`, `--surface`, `--text`, `--text-muted`, `--accent`, `--second`, `--highlight`, `--border`, `--good` and the other status roles), never ramp steps or literal colours. Charts use `--chart-1` to `--chart-6` in order. Ramps exist for rare one-offs.
 - Type uses the scale tokens with their own line height and tracking. No `text-[13px]`.
 - Spacing, radius, shadow and motion use their tokens. A value not in the scale is a design decision: add it to design.json or use the scale.
 

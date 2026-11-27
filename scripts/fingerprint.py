@@ -22,8 +22,11 @@ the fingerprint is stored: no source code, no content. --against only reads
 the registry; nothing is written without --save.
 
 Two rules apply between unrelated projects whatever the score: they may not
-share a text or display typeface, and they may not share both ground and accent
-hue. Pass --same-brand when the projects belong to one brand. --compare on
+share a text or display typeface, and they may not share a primary hue family
+(the accent). The fingerprint also names the palette's harmony (monochromatic,
+analogous, complementary and so on) and how colourful it is; --compare on three
+directions fails when two of them share a harmony, so the directions start
+apart. Pass --same-brand when the projects belong to one brand. --compare on
 directions or screens of one project (files in one folder, a directions/
 folder, or paths under one design.json or DESIGN.md) prints a note instead of
 clashes.
@@ -47,8 +50,9 @@ import sys
 from collections import Counter
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import (class_tokens, collect, declarations, family_of, font_mentions, font_shorthand_size, hue_name,  # noqa: E402
-                        is_dark_context, length_px, md_table, parse_color, resolve_vars, size_px, srgb_to_oklch)
+from design_lib import (chroma_profile, class_tokens, classify_harmony, collect, declarations, family_of, font_mentions,  # noqa: E402
+                        font_shorthand_size, hue_name, is_dark_context, length_px, md_table, parse_color, resolve_vars, size_px,
+                        srgb_to_oklch)
 
 GENERIC = {"serif", "sans-serif", "monospace", "system-ui", "ui-sans-serif", "ui-serif", "ui-monospace", "ui-rounded",
            "-apple-system", "blinkmacsystemfont", "inherit", "segoe ui", "roboto", "helvetica neue", "helvetica", "arial",
@@ -145,7 +149,7 @@ def extract(sources) -> dict:
     fams, display, body = Counter(), Counter(), Counter()
     # status classes whose text colour is only used for state ("In stock", "Failed"), never for the brand
     status_sel = re.compile(r"status|stock|availab|\b(valid|invalid|ok|done|paid|overdue|late|online|offline)\b", re.I)
-    chroma_hues, bgs, neutral_tint, ink = Counter(), Counter(), Counter(), Counter()
+    chroma_hues, bgs, neutral_tint, ink, chroma_cols = Counter(), Counter(), Counter(), Counter(), Counter()
     radii, shadows, sizes = Counter(), Counter(), Counter()
     centred = text_align = gradient = glass = cols3 = mono_small = 0
     tw = Counter()
@@ -182,13 +186,14 @@ def extract(sources) -> dict:
                 continue
             if prop.startswith("--") and re.search(r"-(\d{2,3})$", prop):
                 continue  # ramp steps are raw material, not usage
-            if re.search(r"(?<![a-z])(?:good|warn(?:ing)?|bad|info|danger|success|errors?|alert|critical|positive|negative|caution|ok)(?![a-z])",
+            if re.search(r"(?<![a-z])(?:good|warn(?:ing)?|bad|info|danger|success|errors?|alert|critical|positive|negative|caution|ok|fatal|debug|trace|pass(?:ed)?|fail(?:ed|ure)?|level|lvl|severity|status|up|down|gain|loss)(?![a-z])",
                          prop + " " + sel + " " + raw, re.I):
                 continue  # semantic colours (named so in the property, the selector or the token used) are not the brand's accent
             if prop == "color" and status_sel.search(sel):
                 continue  # status text such as "In stock" in green
             if c >= 0.07 and 0.25 < L < 0.92:
                 chroma_hues[hue_name(h, c, L)] += 1
+                chroma_cols[(round(L, 2), round(c, 3), round(h))] += 1
             elif c >= 0.004:
                 neutral_tint["warm" if (h < 115 or h > 340) else "cool"] += 1
             else:
@@ -241,6 +246,7 @@ def extract(sources) -> dict:
                 name, step = m.group(1), int(m.group(2))
                 if name in TW_HUE and 300 <= step <= 800:
                     chroma_hues[hue_name(TW_HUE[name], 0.15, 0.6)] += n
+                    chroma_cols[(0.6, 0.15, TW_HUE[name])] += n
                 elif name in TW_NEUTRAL:
                     neutral_tint[TW_NEUTRAL[name]] += n
             if k in TW_RADIUS and k != "rounded-full":
@@ -274,10 +280,12 @@ def extract(sources) -> dict:
     ratios = [b / a for a, b in zip(sz, sz[1:]) if 1.05 < b / a < 1.7]
     total_r = sum(radii.values())
     accents = [h for h, _n in chroma_hues.most_common(2)] or ["neutral"]
+    harmony, colour_level = palette_traits(chroma_cols)
     return {
         "fonts": fonts, "display": display_face, "text": text_face,
         "accent": accents,
         "accent_spread": len([h for h, n in chroma_hues.items() if n >= max(2, 0.12 * sum(chroma_hues.values()))]),
+        "harmony": harmony, "colour_level": colour_level,
         "neutral": (neutral_tint.most_common(1) or [("none", 0)])[0][0],
         "ground": (bgs.most_common(1) or [("unknown", 0)])[0][0],
         "ink": (ink.most_common(1) or [("unknown", 0)])[0][0],
@@ -307,6 +315,7 @@ def from_render(path: str) -> dict:
     big = (f.get("fold", {}).get("largest") or {}).get("family", "").lower()
     display_face = big if big and big not in GENERIC else text_face
     hues = Counter()
+    cols = Counter()
     ink = "unknown"
     for i, (hexv, share) in enumerate(f["textColors"]):
         col = parse_color(hexv)
@@ -315,11 +324,13 @@ def from_render(path: str) -> dict:
             ink = hue_name(h, c, L) if c >= 0.02 else "neutral"
         elif c >= 0.07:
             hues[hue_name(h, c, L)] += share
+            cols[(round(L, 2), round(c, 3), round(h))] += share
     for hexv in f.get("fills", []):
         col = parse_color(hexv)
         L, c, h = srgb_to_oklch(*col[:3])
         if c >= 0.07 and 0.25 < L < 0.92:
             hues[hue_name(h, c, L)] += 0.05
+            cols[(round(L, 2), round(c, 3), round(h))] += 0.05
     page_bg = f.get("pageBackground") or (f["backgrounds"][0] if f["backgrounds"] else "#ffffff")
     bg = parse_color(page_bg) or (1, 1, 1, 1)
     radii = [(k, n) for k, n in f["radii"] if not str(k).endswith("%")]
@@ -328,12 +339,23 @@ def from_render(path: str) -> dict:
     sz = [round(x) for x, share in f["sizes"]]
     ratios = [b / a for a, b in zip(sz, sz[1:]) if 1.05 < b / a < 1.7]
     return {"fonts": fams, "display": display_face, "text": text_face, "accent": [h for h, _ in hues.most_common(2)] or ["neutral"],
-            "accent_spread": len(hues), "neutral": "unknown", "ground": ground_of(bg), "ink": ink,
+            "accent_spread": len(hues), "harmony": palette_traits(cols)[0], "colour_level": palette_traits(cols)[1], "neutral": "unknown", "ground": ground_of(bg), "ink": ink,
             "radius": rad if rad == "pill" else radius_bucket(float(re.sub(r"[^0-9.]", "", rad) or 0)),
             "radius_uniform": round((radii[0][1] if radii else 0) / total_r, 2),
             "shadow": "soft" if f["shadows"] else "none", "sizes": sz, "ratio": round(statistics.median(ratios), 3) if ratios else None,
             "centred": f["centeredShare"] > 0.6, "gradient": f["gradients"] >= 2 or f["gradientText"] > 0, "glass": f["backdropBlur"] >= 2,
             "three_columns": False, "mono_labels": False, "tailwind": False, "evidence": {"rendered": True}}
+
+
+def palette_traits(cols: Counter):
+    """Harmony and colourfulness from the chromatic colours a design uses, weighted by how often each is used."""
+    if not cols:
+        return "neutral", "greyscale"
+    total = sum(cols.values())
+    weighted = [(L, c, h, n / total) for (L, c, h), n in cols.items()]
+    harmony = classify_harmony(weighted, min_chroma=0.07)[0]
+    level = chroma_profile([(L, c, h) for (L, c, h), n in cols.items() if n / total >= 0.05])["level"]
+    return harmony, level
 
 
 def faces(fp: dict) -> set:
@@ -421,6 +443,7 @@ def nearest_default(fp: dict):
 def describe(fp: dict) -> list:
     return [["Typefaces", ", ".join(fp["fonts"]) + (f" (display: {fp['display']}; text: {fp['text']})" if len(fp["fonts"]) > 1 else "")],
             ["Accent hue", ", ".join(fp["accent"]) + (f"; {fp['accent_spread']} hue families in use" if fp.get("accent_spread", 0) > 2 else "")],
+            ["Harmony", f"{fp.get('harmony', 'unknown')}, {fp.get('colour_level', 'unknown')}"],
             ["Neutrals", fp["neutral"]], ["Ground", fp["ground"]], ["Ink", fp.get("ink", "unknown")],
             ["Corner radius", ("pill" if fp["radius"] == "pill" else f"{fp['radius']}px") + (f", on {fp['radius_uniform']:.0%} of rounded boxes" if fp.get("radius_uniform") else "")],
             ["Shadows", fp["shadow"]], ["Type sizes", ", ".join(str(s) for s in fp["sizes"]) or "not found"],
@@ -453,12 +476,13 @@ def main(argv=None):
                     with open(os.path.join(reg, f), encoding="utf-8") as fh:
                         o = json.load(fh)
                     rows.append([f[:-5], ", ".join(sorted(faces(o))) or o["fonts"][0], o.get("ground", "?"), o.get("ink", "?"), ", ".join(o["accent"]),
-                                 o.get("radius", "?"), o.get("shadow", "?")])
+                                 o.get("harmony", "?"), o.get("radius", "?"), o.get("shadow", "?")])
         if not rows:
             print(f"No saved projects in {reg}. Nothing is taken yet.")
             return 0
-        print("# Already used by this owner's projects\n\n" + md_table(["project", "typefaces", "ground", "ink", "accent", "radius", "shadow"], rows))
-        print("\nA new, unrelated product must not reuse a typeface from this list, nor a ground and accent pair. Choose from its own subject.")
+        print("# Already used by this owner's projects\n\n" + md_table(["project", "typefaces", "ground", "ink", "accent", "harmony", "radius", "shadow"], rows))
+        print("\nA new, unrelated product must not reuse a typeface from this list, nor lead with the same accent hue family (the "
+              "first one listed). palette.py reads this registry and ranks taken hues down. Choose from the new product's own subject.")
         return 0
     if a.compare:
         if len(a.compare) < 2:
@@ -477,6 +501,17 @@ def main(argv=None):
             o += [f"## {name}", "", md_table(["trait", "value"], describe(fp)), ""]
         o.append(verdict(worst))
         same = a.same_brand or one_project(a.compare)
+        directions = any("directions" in os.path.abspath(p).split(os.sep) for p in a.compare)
+        twins = []
+        if directions:
+            by = {}
+            for name, fp in fps:
+                by.setdefault(fp.get("harmony", "neutral"), []).append(name)
+            twins = [(h, names) for h, names in by.items() if len(names) > 1]
+            o += ["Harmony of each direction: " + "; ".join(f"{n} {fp.get('harmony')} ({fp.get('colour_level')})" for n, fp in fps) + "."]
+            for h, names in twins:
+                o += [f"Directions {', '.join(names)} share a {h} palette. Give each direction a different harmony (palette.py "
+                      "lists the first three candidates with different ones) so the owner chooses between real alternatives."]
         if clashes and not a.same_brand and same:
             o += ["", "Note: these paths are directions or screens of one project (one folder, a directions/ folder, or under one "
                       "design.json or DESIGN.md), so the clash rules for unrelated products do not apply. Shared typefaces are "
@@ -484,8 +519,8 @@ def main(argv=None):
         elif clashes and not same:
             o += [""] + clashes
         print(json.dumps({"pairs": rows, "clashes": [] if same else clashes, "one_project": same and not a.same_brand,
-                          "fingerprints": dict(fps)}, indent=1) if a.json else "\n".join(o))
-        return 2 if (round(worst, 2) >= 0.75 or (clashes and not same)) else 0
+                          "harmony_twins": twins, "fingerprints": dict(fps)}, indent=1) if a.json else "\n".join(o))
+        return 2 if (round(worst, 2) >= 0.75 or (clashes and not same) or twins) else 0
     if not a.paths and not a.render:
         ap.error("give a project path, --render FILE, or --compare A B")
     fp = from_render(a.render) if a.render else extract(collect(a.paths))
@@ -560,9 +595,11 @@ def clash(name_a: str, a: dict, name_b: str, b: dict) -> list:
     if both:
         out.append(f"Clash: {name_a} and {name_b} both set type in {', '.join(sorted(both))}. Unrelated products should not share a "
                    "text or display face: choose another for the newer one from its own subject (or pass --same-brand).")
-    if a.get("ground") == b.get("ground") and a.get("ground") not in ("unknown", "white") and a["accent"][0] == b["accent"][0] != "neutral":
-        out.append(f"Clash: {name_a} and {name_b} share the same ground ({a['ground']}) and accent hue ({a['accent'][0]}). "
-                   "Re-derive the newer one's colours from its own subject (or pass --same-brand).")
+    if a["accent"][0] == b["accent"][0] != "neutral":
+        ground = f" on the same ground ({a['ground']})" if a.get("ground") == b.get("ground") and a.get("ground") != "unknown" else ""
+        out.append(f"Clash: {name_a} and {name_b} share the primary hue family {a['accent'][0]}{ground}. Unrelated products should "
+                   "not lead with the same hue: rank again with palette.py (it skips taken hues) or re-derive the newer one's colours "
+                   "from its own subject (or pass --same-brand).")
     return out
 
 

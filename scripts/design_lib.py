@@ -205,13 +205,170 @@ def hue_name(h: float, c: float, L: float) -> str:
         return "neutral"
     h = h % 360
     for limit, name in ((35, "red"), (65, "orange"), (90, "amber"), (112, "yellow"), (135, "lime"), (165, "green"),
-                        (200, "teal"), (235, "cyan"), (268, "blue"), (290, "indigo"), (320, "purple"), (345, "pink")):
+                        (200, "teal"), (235, "cyan"), (268, "blue"), (290, "indigo"), (320, "purple"), (356, "pink")):
         if h < limit:
             return name
     return "red"
 
 
-_VAR = re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)")
+# ----------------------------------------------------------------- harmony
+def hue_diff(a: float, b: float) -> float:
+    """Shortest distance between two hues on the wheel, 0 to 180."""
+    d = abs(a - b) % 360
+    return 360 - d if d > 180 else d
+
+
+def mean_hue(pairs) -> float:
+    """Weighted circular mean of [(hue, weight)]."""
+    x = sum(w * math.cos(math.radians(h)) for h, w in pairs)
+    y = sum(w * math.sin(math.radians(h)) for h, w in pairs)
+    return math.degrees(math.atan2(y, x)) % 360
+
+
+def is_chromatic(L: float, c: float, min_chroma: float = 0.045) -> bool:
+    """Whether a colour reads as a hue rather than a tinted neutral. Very light and very dark colours need more chroma
+    before the eye names a hue: cream (#fdfbd4) is a ground, not a yellow."""
+    if L >= 0.9:
+        return c >= max(min_chroma, 0.08)
+    if L <= 0.22:
+        return c >= max(min_chroma, 0.06)
+    return c >= min_chroma
+
+
+def hue_clusters(colours, min_chroma: float = 0.045, join: float = 25.0, min_share: float = 0.1):
+    """Group chromatic colours into hue clusters. colours: [(L, C, H, weight)].
+    Returns [(mean hue, weight share)], heaviest first; clusters under min_share of the weight are dropped."""
+    pts = sorted((h % 360, w) for L, c, h, w in colours if is_chromatic(L, c, min_chroma) and w > 0)
+    clusters = []
+    for h, w in pts:
+        for cl in clusters:
+            if hue_diff(mean_hue(cl), h) <= join:
+                cl.append((h, w))
+                break
+        else:
+            clusters.append([(h, w)])
+    merged = True  # a cluster near 355 and one near 5 are one family
+    while merged and len(clusters) > 1:
+        merged = False
+        for i in range(len(clusters)):
+            for j in range(i + 1, len(clusters)):
+                if hue_diff(mean_hue(clusters[i]), mean_hue(clusters[j])) <= join:
+                    clusters[i] += clusters.pop(j)
+                    merged = True
+                    break
+            if merged:
+                break
+    total = sum(w for cl in clusters for _h, w in cl) or 1.0
+    out = [(round(mean_hue(cl), 1), sum(w for _h, w in cl) / total) for cl in clusters]
+    return sorted([c for c in out if c[1] >= min_share], key=lambda c: -c[1])
+
+
+def _arc(hues) -> float:
+    """The smallest arc of the wheel that holds every hue, and the widest step between neighbours inside it."""
+    hs = sorted(h % 360 for h in hues)
+    if len(hs) < 2:
+        return 0.0
+    gaps = [hs[i + 1] - hs[i] for i in range(len(hs) - 1)] + [hs[0] + 360 - hs[-1]]
+    return 360 - max(gaps)
+
+
+def _step(hues) -> float:
+    hs = sorted(h % 360 for h in hues)
+    gaps = sorted([hs[i + 1] - hs[i] for i in range(len(hs) - 1)] + [hs[0] + 360 - hs[-1]])
+    return gaps[-2] if len(gaps) > 1 else 0.0
+
+
+HARMONIES = ["neutral", "accented neutral", "monochromatic", "analogous", "complementary", "split-complementary",
+             "analogous with complement", "triadic", "square", "tetradic", "polychrome"]
+
+
+def classify_harmony(colours, min_chroma: float = 0.045):
+    """Name the colour-wheel relation of a palette. colours: [(L, C, H, weight)]. Returns (harmony, cluster hues, note).
+    The names are the classic colour-wheel schemes (practice); the thresholds are this skill's (inference)."""
+    chromatic = [x for x in colours if is_chromatic(x[0], x[1], min_chroma)]
+    cl = hue_clusters(colours, min_chroma)
+    hues = [h for h, _s in cl]
+    if not cl:
+        return "neutral", [], "no colour reads as a hue"
+    if len(cl) == 1:
+        if len(chromatic) >= 2:
+            return "monochromatic", hues, "one hue family in several lightnesses"
+        return "accented neutral", hues, "one hue on neutrals"
+    arc = _arc(hues)
+    if arc <= 75 or (arc <= 110 and _step(hues) <= 55):
+        return "analogous", hues, f"neighbouring hues within {arc:.0f} degrees"
+    pairs = [(i, j, hue_diff(hues[i], hues[j])) for i in range(len(hues)) for j in range(i + 1, len(hues))]
+    if len(cl) == 2:
+        d = pairs[0][2]
+        if d >= 135:
+            return "complementary", hues, f"opposites, {d:.0f} degrees apart"
+        if d >= 105:
+            return "triadic", hues, f"two of a triad, {d:.0f} degrees apart"
+        return "square", hues, f"two hues a quarter turn apart ({d:.0f} degrees)"
+    if len(cl) == 3:
+        for k in range(3):
+            others = [h for i, h in enumerate(hues) if i != k]
+            if all(hue_diff(hues[k], o) >= 130 for o in others) and hue_diff(*others) <= 100:
+                return "split-complementary", hues, f"{hues[k]:.0f} against the pair either side of its opposite"
+        if all(95 <= d <= 145 for _i, _j, d in pairs):
+            return "triadic", hues, "three hues about 120 degrees apart"
+        for k in range(3):
+            others = [h for i, h in enumerate(hues) if i != k]
+            if hue_diff(*others) <= 75 and hue_diff(hues[k], mean_hue([(o, 1) for o in others])) >= 135:
+                return "analogous with complement", hues, f"two neighbours and the opposite of their middle ({hues[k]:.0f})"
+        return "polychrome", hues, "three hue families in a loose relation"
+    opp = [(i, j) for i, j, d in pairs if d >= 150]
+    if len(cl) == 4 and len({x for p in opp for x in p}) == 4 and len(opp) >= 2:
+        return "tetradic", hues, "two pairs of opposites"
+    return "polychrome", hues, f"{len(cl)} hue families"
+
+
+def competing_pairs(colours):
+    """Pairs of strong colours that fight: hues 60 to 110 degrees apart (past neighbours, short of a triad) with similar
+    chroma and similar lightness, so neither leads. colours: [(name, L, C, H)]. Lightness difference is what most raises
+    perceived harmony between two colours (research: Ou and Luo 2006, Color Research and Application 31(3)); the window
+    and the limits are this skill's (inference). Returns [(name a, name b, hue difference)]."""
+    out = []
+    for i in range(len(colours)):
+        for j in range(i + 1, len(colours)):
+            na, La, Ca, Ha = colours[i]
+            nb, Lb, Cb, Hb = colours[j]
+            d = hue_diff(Ha, Hb)
+            if 60 <= d <= 110 and min(Ca, Cb) >= 0.1 and min(Ca, Cb) / max(Ca, Cb) >= 0.6 and abs(La - Lb) < 0.15:
+                out.append((na, nb, round(d)))
+    return out
+
+
+def chroma_profile(colours) -> dict:
+    """Colourfulness of a palette. colours: [(L, C, H)]. Levels: greyscale, muted, moderate, rich, neon."""
+    cs = sorted((c for L, c, _h in colours if is_chromatic(L, c, 0.06)), reverse=True)
+    chromatic = cs
+    level = "neon" if cs and cs[0] >= 0.24 else "rich" if len(chromatic) >= 2 and cs[1] >= 0.1 else \
+        "moderate" if len(chromatic) >= 2 or (cs and cs[0] >= 0.15) else "muted" if chromatic else "greyscale"
+    Ls = [L for L, _c, _h in colours]
+    return {"max": round(cs[0], 3) if cs else 0.0, "second": round(cs[1], 3) if len(cs) > 1 else 0.0,
+            "chromatic": len(chromatic), "level": level, "lightness_span": round(max(Ls) - min(Ls), 3) if Ls else 0.0}
+
+
+# Colour-vision simulation, Machado, Oliveira and Fernandes 2009, severity 1.0, applied to linear sRGB.
+CVD = {
+    "protan": ((0.152286, 1.052583, -0.204868), (0.114503, 0.786281, 0.099216), (-0.003882, -0.048116, 1.051998)),
+    "deutan": ((0.367322, 0.860646, -0.227968), (0.280085, 0.672501, 0.047413), (-0.011820, 0.042940, 0.968881)),
+    "tritan": ((1.255528, -0.076749, -0.178779), (-0.078411, 0.930809, 0.147602), (0.004733, 0.691367, 0.303900)),
+}
+
+
+def simulate_cvd(rgb, kind: str):
+    lin = [_lin(v) for v in rgb[:3]]
+    out = [sum(m * v for m, v in zip(row, lin)) for row in CVD[kind]]
+    return tuple(_gam(min(1.0, max(0.0, v))) for v in out)
+
+
+def oklab_distance(a, b) -> float:
+    return math.dist(srgb_to_oklab(*a[:3]), srgb_to_oklab(*b[:3]))
+
+
+_VAR =re.compile(r"var\(\s*(--[\w-]+)\s*(?:,\s*((?:[^()]|\([^()]*\))*))?\)")
 _DARK_SEL = re.compile(r"""\[data-(theme|mode|color-scheme)\s*=\s*["']?dark|(^|[\s.:(])dark(\b|$)|\.theme-dark|\.dark-mode""", re.I)
 
 
@@ -262,6 +419,9 @@ class Source:
         return lo + 1
 
 
+BOARD_MARK = "human-design:board"
+
+
 def collect(paths, max_bytes: int = 1_500_000):
     """Read source files under the given files or folders. Returns a list of Source."""
     out, seen = [], set()
@@ -282,9 +442,12 @@ def collect(paths, max_bytes: int = 1_500_000):
                 if os.path.getsize(f) > max_bytes:
                     continue
                 with open(f, encoding="utf-8", errors="ignore") as fh:
-                    out.append(Source(f, fh.read()))
+                    text = fh.read()
             except OSError:
                 continue
+            if f != p and BOARD_MARK in text[:4000]:
+                continue  # a palette or directions board shows candidates, not the design; read it only when named directly
+            out.append(Source(f, text))
     # follow local stylesheets linked from the pages and @import-ed by stylesheets (app.css importing tokens.css),
     # so a page or stylesheet checked alone still has its tokens
     i = 0

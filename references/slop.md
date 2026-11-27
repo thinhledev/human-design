@@ -77,7 +77,7 @@ strong tells and on a whole-look match.
 A skill that hands out the same "distinctive" answers creates its own
 signature. This one avoids it by construction:
 
-- It contains no palette, font pairing, layout or component kit to reuse. Every value comes from the project's brief and world study.
+- It contains no finished palette, font pairing, layout or component kit to reuse. Its colour library (combinations and category conventions) is ranked per brief, moved by the subject's own colours, and ranks down any hue the owner's other projects already lead with.
 - The typefaces it mentions are examples to evaluate, with a list of the ones already turning into defaults (`typography.md`).
 - `fingerprint.py --against` compares each new design with the owner's previous ones. Two unrelated projects above 75% similarity is a failure of method, whatever the tells say.
 - The identity records refusals and rejected directions, so the same idea is not proposed twice.

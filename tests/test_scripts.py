@@ -11,7 +11,7 @@ import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 sys.path.insert(0, os.path.join(HERE, "..", "scripts"))
-import contrast_check, design_lib as d, fingerprint, render_check, slop_check, tokens  # noqa: E402,E401
+import contrast_check, design_lib as d, fingerprint, palette, render_check, slop_check, tokens  # noqa: E402,E401
 
 SLOP = """<!doctype html><html lang="en"><head><title>Vite + React</title><style>
 body{margin:0;font-family:"Inter",sans-serif;background:#fff;color:#111}
@@ -145,8 +145,12 @@ class Scripts(unittest.TestCase):
         data["type"]["display"]["family"] = "Archivo"
         data["type"]["text"]["family"] = "Literata"
         data["type"]["mono"]["family"] = "Commit Mono"
-        data["color"]["neutral"] = {"hue": 70, "chroma": 0.012}
-        data["color"]["accent"] = {"hue": 245, "chroma": 0.11, "lightness": 0.46}
+        data["color"]["palette"] = {
+            "harmony": "complementary", "source": "kiln brick against cobalt glaze",
+            "ground": {"hue": 70, "chroma": 0.012, "lightness": 0.975},
+            "ink": {"hue": 250, "chroma": 0.03, "lightness": 0.22},
+            "primary": {"hue": 245, "chroma": 0.11, "lightness": 0.46},
+            "secondary": {"hue": 45, "chroma": 0.12, "lightness": 0.62}}
         json.dump(data, open(spec, "w"))
         css = os.path.join(self.tmp, "tokens.css")
         code, out = run(tokens, [spec, "--css", css, "--tailwind", os.path.join(self.tmp, "t.css"),
@@ -241,6 +245,162 @@ body{margin:0;background:#141414;color:#eee;font:16px/1.5 Georgia,serif}
         self.assertGreater(facts["svgChars"], 0)
         self.assertNotIn(8, [size for size, _share in facts["sizes"]])
         self.assertEqual(facts["shadows"], 1)
+
+
+class Colour(unittest.TestCase):
+    """Colour chosen as a set: the combination library, domain presets, harmony and the palette checks."""
+
+    @staticmethod
+    def spec(**palette_roles):
+        s = json.loads(json.dumps(tokens.STARTER))
+        s.update(name="Test")
+        for role, fam in (("display", "Archivo"), ("text", "Literata"), ("mono", "Commit Mono")):
+            s["type"][role]["family"] = fam
+        s["color"]["palette"] = {"harmony": "", "source": "test", **palette_roles}
+        return s
+
+    def test_library_loads_and_is_complete(self):
+        combos, domains = palette.load()
+        self.assertEqual(len([c for c in combos if c.startswith("figma-")]), 100)
+        self.assertEqual(len(domains), 24)
+        for c in combos.values():
+            self.assertEqual(len(c["colours"]), 4, c["id"])
+            for h in c["colours"]:
+                self.assertIsNotNone(d.parse_color(h), (c["id"], h))
+        for dm in domains.values():
+            for cid in dm["candidates"]:
+                self.assertIn(cid, combos, (dm["id"], cid))
+        text = open(os.path.join(HERE, "..", "references", "data", "domains.json"), encoding="utf-8").read()
+        self.assertNotIn("\u2014", text)  # no em dashes in written content
+
+    def test_harmony_names(self):
+        def h(*lch):
+            return d.classify_harmony([(L, c, hh, 1) for L, c, hh in lch])[0]
+        self.assertEqual(h((0.5, 0.15, 30), (0.7, 0.1, 32), (0.3, 0.08, 28)), "monochromatic")
+        self.assertEqual(h((0.97, 0.01, 250), (0.55, 0.15, 260)), "accented neutral")
+        self.assertEqual(h((0.6, 0.15, 40), (0.6, 0.14, 220)), "complementary")
+        self.assertEqual(h((0.6, 0.15, 30), (0.6, 0.15, 70)), "analogous")
+        self.assertEqual(h((0.98, 0.05, 105), (0.5, 0.15, 30)), "accented neutral")  # cream is a ground, not a hue
+        self.assertEqual(d.competing_pairs([("a", 0.6, 0.15, 40), ("b", 0.62, 0.14, 130)]), [("a", "b", 90)])
+        self.assertEqual(d.competing_pairs([("a", 0.4, 0.15, 40), ("b", 0.8, 0.14, 130)]), [])
+
+    def test_ranking_fits_the_domain_and_skips_taken_hues(self):
+        combos, domains = palette.load()
+        top = palette.shortlist(combos, domains["dev-tools"], ["technical"], "dim", {}, 6)
+        self.assertTrue(all(an["has_dark"] for _s, _c, an, _w in top[:3]))
+        self.assertEqual(len({an["harmony"] for _s, _c, an, _w in top[:3]}), 3)
+        food = palette.shortlist(combos, domains["food"], [], "", {}, 3)
+        self.assertTrue(all(an["temperature"] == "warm" for _s, _c, an, _w in food))
+        first = food[0][2]["primary_family"]
+        again = palette.shortlist(combos, domains["food"], [], "", {first: ["older-project"]}, 3)
+        self.assertNotEqual(again[0][1]["id"], food[0][1]["id"])
+        self.assertEqual(palette.guess_domain("an app to learn a new language", domains)[0][1], "education")
+
+    def test_apply_board_and_tokens(self):
+        tmp = tempfile.mkdtemp()
+        spec = os.path.join(tmp, "design.json")
+        json.dump(self.spec(ground={"hue": 0, "chroma": 0}, primary={"hue": 0, "chroma": 0, "lightness": 0.5}), open(spec, "w"))
+        code, out = run(palette, ["--apply", "figma-36", spec])
+        self.assertEqual(code, 0, out)
+        data = json.load(open(spec))
+        self.assertIn("primary", data["color"]["palette"])
+        self.assertIn("figma-36", data["color"]["palette"]["source"])
+        code, out = run(tokens, [spec, "--css", os.path.join(tmp, "t.css")])
+        self.assertEqual(code, 0, out)
+        css = open(os.path.join(tmp, "t.css")).read()
+        for role in ("--second:", "--highlight:", "--chart-1:", "--chart-6:", "--on-highlight:"):
+            self.assertIn(role, css)
+        self.assertIn("Harmony:", out)
+        board = os.path.join(tmp, "board.html")
+        code, out = run(palette, ["--domain", "kids", "--board", board, "--top", "3"])
+        self.assertEqual(code, 0, out)
+        page = open(board).read()
+        self.assertEqual(page.count('class="cand"'), 3)
+        self.assertIn("--chart-1:", page)
+
+    def test_timid_and_competing_palettes_fail_unless_deliberate(self):
+        timid = self.spec(ground={"hue": 250, "chroma": 0.004, "lightness": 0.985}, primary={"hue": 255, "chroma": 0.15, "lightness": 0.5})
+        data = tokens.build(timid)
+        self.assertTrue(data["palette"]["timid"])
+        timid["deliberate"] = {"palette-timid": "a tax form: the register is plain on purpose"}
+        self.assertTrue(tokens.build(timid)["palette"]["timid_ok"])
+        rich = self.spec(ground={"hue": 70, "chroma": 0.02, "lightness": 0.97}, primary={"hue": 40, "chroma": 0.15, "lightness": 0.6},
+                         secondary={"hue": 130, "chroma": 0.14, "lightness": 0.62})
+        data = tokens.build(rich)
+        self.assertFalse(data["palette"]["timid"])
+        self.assertTrue(data["palette"]["competing"])
+
+    def test_fills_carry_text_and_status_moves_off_the_primary(self):
+        spec = self.spec(ground={"hue": 60, "chroma": 0.01, "lightness": 0.98}, primary={"hue": 35, "chroma": 0.18, "lightness": 0.6},
+                         highlight={"hue": 95, "chroma": 0.15, "lightness": 0.62})
+        data = tokens.build(spec)
+        for mode in data["modes"]:
+            r = data["roles"][mode]
+            self.assertGreaterEqual(d.wcag_contrast(r["on-accent"]["rgb"], r["accent"]["rgb"]), 4.5)
+            self.assertGreaterEqual(d.wcag_contrast(r["on-highlight"]["rgb"], r["highlight"]["rgb"]), 4.5)
+        self.assertGreaterEqual(d.hue_diff(tokens.semantic_hues({"bad": 27}, {"hue": 35, "chroma": 0.18})["bad"], 35), 18)
+
+    def test_older_schema_still_builds(self):
+        spec = self.spec(ground={"hue": 0, "chroma": 0}, primary={"hue": 0, "chroma": 0, "lightness": 0.5})
+        spec["color"].pop("palette")
+        spec["color"]["neutral"] = {"hue": 70, "chroma": 0.012}
+        spec["color"]["accent"] = {"hue": 245, "chroma": 0.11, "lightness": 0.46}
+        spec["color"]["second"] = {"hue": 45, "chroma": 0.12, "lightness": 0.62}
+        data = tokens.build(spec)
+        self.assertIn("second", data["roles"]["light"])
+        self.assertFalse(data["palette"]["timid"])
+
+    def test_primary_hue_reuse_clashes_and_directions_need_different_harmonies(self):
+        a = {"fonts": ["x"], "display": "x", "text": "x", "accent": ["blue"], "ground": "white"}
+        b = {"fonts": ["y"], "display": "y", "text": "y", "accent": ["blue"], "ground": "cream"}
+        self.assertTrue(any("primary hue family blue" in c for c in fingerprint.clash("a", a, "b", b)))
+        tmp = tempfile.mkdtemp()
+        os.makedirs(os.path.join(tmp, "directions"))
+        pages = {"a": "#c2410c;--b:#0e7490", "b": "#b91c1c;--b:#0369a1", "c": "#15803d;--b:#16a34a"}
+        paths = []
+        for n, cols in pages.items():
+            paths.append(os.path.join(tmp, "directions", n + ".html"))
+            first, second = cols.split(";--b:")
+            open(paths[-1], "w").write('<style>body{font-family:"F%s";background:#fff}a{color:%s}.x{color:%s}.y{color:%s}</style>'
+                                       % (n, first, second, second))
+        code, out = run(fingerprint, ["--compare"] + paths)
+        self.assertEqual(code, 2, out)
+        self.assertIn("share a complementary palette", out)
+
+
+class TrialFixes(unittest.TestCase):
+    """Problems found by the first colour trial (27 November 2026)."""
+
+    def test_highlight_is_not_a_second_primary(self):
+        combos, _ = palette.load()
+        roles = palette.analyse(combos["figma-36"])["roles"]
+        self.assertIn("highlight", roles)
+        for other in ("secondary", "highlight"):
+            self.assertGreaterEqual(d.hue_diff(roles[other]["hue"], roles["primary"]["hue"]), 25)
+
+    def test_brief_outweighs_candidate_list(self):
+        combos, domains = palette.load()
+        moods, _ = palette.brief_tags(["warm", "encouraging", "grown-up"])
+        avoid, _ = palette.brief_tags(["childish"])
+        top = palette.shortlist(combos, domains["education"], moods, "", {}, 6, avoid)
+        self.assertNotIn("figma-28", [c["id"] for _s, c, _a, _w in top[:3]])
+
+    def test_magenta_is_pink(self):
+        self.assertEqual(d.hue_name(348, 0.15, 0.65), "pink")
+        self.assertEqual(d.hue_name(20, 0.15, 0.55), "red")
+
+    def test_boards_are_skipped_in_folders(self):
+        tmp = tempfile.mkdtemp()
+        open(os.path.join(tmp, "index.html"), "w").write("<style>a{color:#c2410c}</style>")
+        open(os.path.join(tmp, "board.html"), "w").write("<!-- human-design:board --><style>a{color:#0369a1}</style>")
+        self.assertEqual([os.path.basename(x.path) for x in d.collect([tmp])], ["index.html"])
+        self.assertEqual(len(d.collect([os.path.join(tmp, "board.html")])), 1)
+
+    def test_motion_notes_are_not_tokens(self):
+        spec = Colour.spec(ground={"hue": 70, "chroma": 0.02, "lightness": 0.97}, primary={"hue": 40, "chroma": 0.15, "lightness": 0.5},
+                           secondary={"hue": 200, "chroma": 0.1, "lightness": 0.5})
+        spec["motion"]["character"] = "quick and flat"
+        self.assertNotIn("--dur-character", tokens.css_vars(tokens.build(spec)))
 
 
 if __name__ == "__main__":

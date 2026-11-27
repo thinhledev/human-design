@@ -30,9 +30,11 @@ No answer is also an answer: record "not decided" and choose in step 4 with a st
 If a personal taste file exists at `~/.human-design/taste.md`, read it first.
 
 Before choosing anything, run `python3 scripts/fingerprint.py --taken`. It
-lists the typefaces, grounds and accents the owner's other projects already
-use. A new, unrelated product may not reuse a typeface from that list, nor a
-ground and accent pair.
+lists the typefaces, grounds, accents and harmonies the owner's other projects
+already use. A new, unrelated product may not reuse a typeface from that list,
+nor lead with the same accent hue family. Then read the domain preset for the
+product's category (`python3 scripts/palette.py --domains`): what users of
+that category expect, and what the category does from habit.
 
 ## 2. Study the subject's world (15 minutes, written down)
 
@@ -70,9 +72,9 @@ Three words from the brief, each with what it means on screen:
 | --- | --- | --- |
 | Text face, display face, mono | from the world study; one family may be enough | `typography.md` |
 | Type scale | 5 to 7 sizes for product UI; add display sizes for marketing | `typography.md` |
-| Ground | white, tinted, cream, grey, dark; why this one for where it is used | `color.md` |
+| Palette | a combination ranked for the domain and brief (`palette.py`), moved by the subject's own colours; its harmony | `color.md`, `color-combinations.md` |
+| Colour roles | ground (for where it is used), ink, primary, and a job for the secondary and highlight; where each may appear | `color.md` |
 | Neutrals | tinted toward which hue, how strongly | `color.md` |
-| Accent | one hue with its source in the subject; where it may appear | `color.md` |
 | Density | compact (tools used all day), regular, airy (reading, selling) | `layout.md` |
 | Grid and layout concept | one sentence: "a ledger: hairline rows, numbers right-aligned" | `layout.md` |
 | Shape | radius by role (controls, containers, media), or none | `layout.md` |
@@ -101,6 +103,7 @@ grotesque because the whole product is a timetable" is a reason.
 skill's own benchmark (22 November 2026), across unrelated products:
 
 - a pale grey-green ground with dark green ink and an indigo or blue accent;
+- one accent on greys and nothing else: correct, timid, and the owner's main complaint about this skill's colour (November 2026);
 - Atkinson Hyperlegible Next, Instrument Sans or Schibsted Grotesk, with a mono for labels;
 - square corners, hairlines, no shadows, no images: plain and correct.
 
@@ -115,9 +118,9 @@ warmth or wit from the subject's world, or it reads as a government form.
 
 Skip this when the project already has an identity.
 
-1. Write three directions that answer the brief differently: a different lead decision in each (type-led, colour-led, layout-led, or image-led), not three colourways of one layout. At least one should be warmer or bolder than you would choose by habit.
+1. Write three directions that answer the brief differently: a different lead decision in each (type-led, colour-led, layout-led, or image-led), not three colourways of one layout. Each starts from a different candidate on the palette board, so the three use different harmonies (palette.py's first three already do). At least one should be warmer or bolder than you would choose by habit.
 2. Build each as one cheap thumbnail of the same real screen: the first screen, real copy, no polish. One file per direction, from `assets/direction.template.html` (`directions/a.html`, `b.html`, `c.html`), shown together with `assets/directions.template.html`.
-3. Run `fingerprint.py directions/a.html` on each, and `fingerprint.py --compare directions/a.html directions/b.html directions/c.html`. Drop any that lands on a catalogued default look or clashes with a saved project; make any two that are more than 55% alike differ in type or ground.
+3. Run `fingerprint.py directions/a.html` on each, and `fingerprint.py --compare directions/a.html directions/b.html directions/c.html`. Drop any that lands on a catalogued default look or clashes with a saved project; make any two that are more than 55% alike differ in type or ground. The comparison fails when two directions share a harmony.
 4. Show the three with one line each on what it bets on and what it gives up. The owner picks, or mixes.
 5. Record the choice and the two rejected directions in DESIGN.md, so they are not proposed again.
 
@@ -132,7 +135,7 @@ Skip this when the project already has an identity.
 
 ## 7. Write it down and keep it current
 
-- Fill `DESIGN.md` and `design.json`; generate tokens: `python3 scripts/tokens.py design.json --css tokens.css`. The starter from `tokens.py --init` lists the optional keys under `_options` (ground lightness, a separate ink, a second accent, one or two colour modes) and has places for the signature, refusals and deliberate choices.
+- Fill `DESIGN.md` and `design.json`; generate tokens: `python3 scripts/tokens.py design.json --css tokens.css`. The starter from `tokens.py --init` lists the optional keys under `_options` (the palette roles, chart colours, semantic chroma, one or two colour modes) and has places for the signature, refusals and deliberate choices.
 - Every later screen starts by reading DESIGN.md. New decisions are appended to its log with a date and a reason; nothing is decided twice.
 - A choice that looks like a known default but was made on purpose goes under `"deliberate"` in design.json with its reason: `{"deliberate": {"colour-purple": "the brand has been violet since 2019"}}`. `slop_check.py --identity design.json` then lists it as declared.
 - When the owner corrects a design ("too playful", "tighter", "I never want pills"), record the correction in DESIGN.md under Taste, and offer to add lasting preferences to `~/.human-design/taste.md` so other projects inherit the taste, not the look.

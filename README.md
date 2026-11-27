@@ -12,7 +12,8 @@ An agent skill for designing and building interfaces that look made by a person 
 
 ## What makes it different
 
-- **An identity per project.** The design is derived from the subject (its materials, documents, colours and terms) and recorded in `DESIGN.md` and `design.json`, so every later screen obeys the same decisions. The skill ships no palette, font pairing, layout or component kit to reuse.
+- **An identity per project.** The design is derived from the subject (its materials, documents, colours and terms) and recorded in `DESIGN.md` and `design.json`, so every later screen obeys the same decisions. The skill ships no finished palette, font pairing, layout or component kit to reuse.
+- **Colour chosen as a set.** `palette.py` ranks a library of colour combinations (Figma's 100, analysed, plus its own for thin domains) for the product's category (24 presets: what users expect, what the category does from habit), the brief's words, the place of use and the hues the owner's other projects already use, and shows the candidates on real components in light and dark. `tokens.py` turns the chosen one into roles, chart colours and status colours in harmony, and fails a palette that is timid or whose colours compete.
 - **A defence against its own signature.** `fingerprint.py` compares each design with the default looks AI tools converge on and with the owner's other projects, and fails when unrelated products look alike.
 - **It looks at the result.** `render_check.py` drives headless Chrome, saves screenshots at several widths in light and dark (plus a blurred squint image), and measures what was drawn: fonts that silently fell back, contrast, characters per line, sideways scroll, small targets, centred text, off-scale spacing, animations that ignore reduced motion.
 - **Nothing static.** Every control is drawn in six states and every data view in five before the screens are built.
@@ -24,9 +25,9 @@ An agent skill for designing and building interfaces that look made by a person 
 | Path | What | In the sale ZIP |
 | --- | --- | --- |
 | `SKILL.md` | Operating rules, job router, four workflows, scripts, lessons | Yes |
-| `references/` | Sixteen references: identity, slop, typography, colour, layout, states and motion, copy, critique, five surfaces, web platform, hand-off, sources | Yes |
-| `scripts/` | Five Python CLIs plus `design_lib.py` | Yes |
-| `assets/` | `DESIGN.template.md`, a state-sheet template and a directions template (structure only, no look) | Yes |
+| `references/` | Eighteen references: identity, slop, typography, colour, colour combinations (and the generated catalogue), layout, states and motion, copy, critique, five surfaces, web platform, hand-off, sources; `references/data/` holds the combination library and the domain presets | Yes |
+| `scripts/` | Six Python CLIs plus `design_lib.py` | Yes |
+| `assets/` | `DESIGN.template.md`, a palette-board template, a state-sheet template and a directions template (structure only, no look) | Yes |
 | `LICENSE` | Proprietary license for buyers | Yes |
 | `tests/` | Unit and end-to-end tests (the render test needs Chrome) | No |
 | `evals/` | Two eval cases in the skill-creator format, both fictional | No |
@@ -37,7 +38,9 @@ An agent skill for designing and building interfaces that look made by a person 
 Python 3.8 or newer, standard library only. `render_check.py` needs Chrome, Chromium or Edge.
 
 ```bash
+python3 scripts/palette.py --domain dev-tools --mood exact,warm --place dim --board board.html
 python3 scripts/tokens.py --init design.json
+python3 scripts/palette.py --apply hd-terminal-amber design.json
 python3 scripts/tokens.py design.json --css tokens.css --tailwind theme.css
 python3 scripts/render_check.py index.html --out shots --widths 390,1440 --schemes light,dark --squint
 python3 scripts/slop_check.py src --identity design.json --surface app

@@ -1,0 +1,4 @@
+schema_version: "1.1"
+name: color
+expected_outcome: |
+  The working folder holds three unrelated projects (tidewater/, parla/, halden/), each with DESIGN.md, design.json, generated tokens, a palette board and index.html showing the product's first screen. Each palette was ranked for its category with palette.py (developer tools, education and language learning, food), seen on a board, and then moved by the subject; palette.source says what moved it. Each palette names its harmony, has a lead colour and gives a second colour a job (no timid one-accent-on-grey palette unless declared deliberate with a reason from the subject), and tokens.py passes. The three products lead with three different hue families, none of them knightship's blue, and fingerprint.py --against reports no clash. The agent shows the boards, names each choice's convention and twist, and reports what it checked.

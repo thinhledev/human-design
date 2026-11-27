@@ -38,7 +38,10 @@ Numbers live in `design.json`; tokens are generated with
 | Type scale | | |
 | Ground | | |
 | Neutrals | | |
-| Accent and where it may appear | | |
+| Palette: the combination it started from, and what in the subject moved it | | |
+| Harmony (monochromatic, analogous, complementary...) | | |
+| Primary and where it may appear | | |
+| Secondary and highlight: the job of each | | |
 | Density | | |
 | Layout concept | | |
 | Shape (radius by role) | | |

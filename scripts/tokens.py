@@ -11,6 +11,14 @@ Usage:
   python3 tokens.py design.json --swift Tokens.swift --kotlin Tokens.kt
   python3 tokens.py --init design.json                  # write a commented starter file
 
+Colour comes from color.palette, a set of roles (ground, surface, ink, primary,
+secondary, highlight) usually adapted from a combination that palette.py
+ranked for the brief. The report names the palette's harmony and exits with
+status 2 when a text pair fails contrast, when only one colour carries any hue
+(a timid palette) or when two strong colours compete, unless design.json lists
+the last two under "deliberate" with a reason. The older neutral and accent
+keys still work.
+
 The identity file states decisions; this script only does the arithmetic. It
 never chooses a typeface, a hue or a ratio for you: those come from the brief
 (references/identity.md). Missing keys fail with a message instead of falling
@@ -27,7 +35,8 @@ import re
 import sys
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from design_lib import apca, fit_oklch, md_table, parse_color, srgb_to_oklch, to_hex, wcag_contrast  # noqa: E402
+from design_lib import (apca, chroma_profile, classify_harmony, competing_pairs, fit_oklch, hue_diff, is_chromatic,  # noqa: E402
+                        md_table, oklab_distance, parse_color, simulate_cvd, srgb_to_oklch, to_hex, wcag_contrast)
 
 ROOT_PX = 16  # rem is relative to the root font size; the tokens never change it, so every rem value divides by 16
 
@@ -38,10 +47,11 @@ CURVE = [0.18, 0.32, 0.55, 0.78, 0.95, 1.0, 0.97, 0.88, 0.76, 0.62, 0.48]
 STARTER = {
     "_readme": "Every value here is a decision from the brief. Replace all of them; see references/identity.md.",
     "_options": {
-        "color.neutral.bg_lightness": "lightness of the light ground, 0 to 1 (default 0.985); bg_lightness_dark for the dark one (default 0.2)",
-        "color.ink": "optional {hue, chroma} for text when it should differ from the neutral hue",
-        "color.accent.lightness_dark": "accent lightness in dark mode (default: lighter than light mode)",
-        "color.second": "optional second accent {hue, chroma, lightness}; emits a ramp and the roles second and second-text",
+        "color.palette": "roles in OKLCH {hue, chroma, lightness}: ground (required; lightness_dark and chroma_dark for the dark ground), primary (required: actions, current item, links), ink, secondary and highlight (optional, each with a job), surface (optional: a coloured card or panel). Start from python3 scripts/palette.py --apply ID design.json",
+        "color.palette.*.lightness_dark": "lightness of that role in dark mode (default: lighter than in light mode)",
+        "color.chart": "number of categorical chart colours to derive from the palette (default 6, 0 for none), or a list of hues",
+        "color.semantic_chroma": "chroma of good, warn, bad and info (default: follows the primary, between 0.09 and 0.17)",
+        "older keys": "color.neutral {hue, chroma, bg_lightness}, color.accent, color.second and color.ink still work when there is no palette",
         "color.modes": "[\"light\"], [\"dark\"] or both; list the primary one first",
         "chroma": "values above what sRGB can show are reduced automatically, so a strong yellow or lime may be set high",
         "shadow": "none, hairline, soft or hard",
@@ -68,9 +78,17 @@ STARTER = {
         "fluid_from": 36,
     },
     "color": {
-        "neutral": {"hue": 0, "chroma": 0.0},
-        "accent": {"hue": 0, "chroma": 0.0, "lightness": 0.55},
+        "palette": {
+            "harmony": "REPLACE: the relation you chose (palette.py --show ID names it)",
+            "source": "REPLACE: the combination it started from and what in the subject moved it",
+            "ground": {"hue": 0, "chroma": 0.0, "lightness": 0.985, "lightness_dark": 0.2},
+            "ink": {"hue": 0, "chroma": 0.0, "lightness": 0.21},
+            "primary": {"hue": 0, "chroma": 0.0, "lightness": 0.55},
+            "secondary": {"hue": 0, "chroma": 0.0, "lightness": 0.6},
+            "highlight": {"hue": 0, "chroma": 0.0, "lightness": 0.85},
+        },
         "semantic": {"good": 150, "warn": 75, "bad": 27, "info": 240},
+        "chart": 6,
         "modes": ["light", "dark"],
     },
     "space": {"base": 4, "steps": [1, 2, 3, 4, 6, 8, 12, 16, 24, 32]},
@@ -89,6 +107,39 @@ def need(d, path):
     if cur == "REPLACE" or cur == "PROJECT NAME":
         sys.exit(f"design.json: '{path}' still has the starter placeholder.")
     return cur
+
+
+PALETTE_ROLES = ("ground", "surface", "ink", "primary", "secondary", "highlight")
+SEMANTIC_RANGE = {"good": (125, 165), "warn": (55, 95), "bad": (15, 40), "info": (205, 265)}
+
+
+def normalise(spec):
+    """Map color.palette (roles) onto the neutral, accent, second, ink, highlight and surface keys that roles() reads."""
+    c = spec.setdefault("color", {})
+    p = c.get("palette")
+    if not p:
+        return spec
+    for key in p:
+        if key not in PALETTE_ROLES + ("harmony", "source", "note"):
+            sys.exit(f"design.json: color.palette.{key} is not a role. Roles: {', '.join(PALETTE_ROLES)}.")
+    for role in ("ground", "primary"):
+        if role not in p:
+            sys.exit(f"design.json: color.palette needs '{role}'.")
+    for role in PALETTE_ROLES:
+        if role in p:
+            for k in ("hue", "chroma", "lightness") if role != "ground" else ("hue", "chroma"):
+                if k not in p[role]:
+                    sys.exit(f"design.json: color.palette.{role} needs {k}.")
+    g = p["ground"]
+    c["neutral"] = {"hue": g["hue"], "chroma": g.get("neutral_chroma", min(max(g["chroma"] * 1.5, 0.004), 0.04)),
+                    "bg_lightness": g.get("lightness", 0.985), "bg_lightness_dark": g.get("lightness_dark", 0.2), "bg_chroma": g["chroma"]}
+    if "chroma_dark" in g:
+        c["neutral"]["bg_chroma_dark"] = g["chroma_dark"]
+    c["accent"] = dict(p["primary"])
+    for role, key in (("secondary", "second"), ("ink", "ink"), ("highlight", "highlight"), ("surface", "surface_colour")):
+        if role in p:
+            c[key] = dict(p[role])
+    return spec
 
 
 def ramp(hue, chroma):
@@ -125,15 +176,20 @@ def roles(spec, mode):
     sem = spec["color"].get("semantic", {})
     ink = spec["color"].get("ink") or {"hue": nh, "chroma": min(0.03, nc * 1.5)}
     second = spec["color"].get("second")
+    hl = spec["color"].get("highlight")
+    sem = semantic_hues(sem, a)
+    sc_sem = spec["color"].get("semantic_chroma", min(0.17, max(0.09, ac)))
     r = {}
     if mode == "light":
-        r["bg"] = pick(n.get("bg_lightness", 0.985), nc * 0.5, nh)
-        r["surface"] = pick(min(0.999, r["bg"]["L"] + 0.012), nc * 0.4, nh)
-        r["sunken"] = pick(r["bg"]["L"] - 0.03, nc * 0.7, nh)
+        r["bg"] = pick(n.get("bg_lightness", 0.985), n.get("bg_chroma", nc * 0.5), nh)
+        sc = spec["color"].get("surface_colour")
+        r["surface"] = pick(sc["lightness"], sc["chroma"], sc["hue"]) if sc else pick(min(0.999, r["bg"]["L"] + 0.012), r["bg"]["C"] * 0.8, nh)
+        r["sunken"] = pick(r["bg"]["L"] - 0.03, max(nc * 0.7, r["bg"]["C"]), nh)
         r["border"] = pick(r["bg"]["L"] - 0.09, nc, nh)
         r["border-strong"] = ensure(pick(r["bg"]["L"] - 0.36, nc, nh), r["bg"], 3.0, nh, nc, darker=True)
         r["text"] = pick(ink.get("lightness", 0.21), ink["chroma"], ink["hue"])
-        low = r["sunken"]  # the darkest light surface: text must hold on it too
+        low = min((r["sunken"], r["surface"]), key=lambda x: x["L"])  # the darkest light surface: text must hold on it too
+        r["text"] = ensure(r["text"], low, 7.0, ink["hue"], ink["chroma"], darker=True)
         r["text-muted"] = ensure(pick(0.48, nc * 1.2, nh), low, 4.5, nh, nc * 1.2, darker=True)
         r["text-subtle"] = ensure(pick(0.6, nc, nh), low, 3.0, nh, nc, darker=True)
         r["accent"] = pick(aL, ac, ah)
@@ -144,12 +200,17 @@ def roles(spec, mode):
             r["second"] = pick(second.get("lightness", 0.6), second["chroma"], second["hue"])
             r["second-text"] = ensure(pick(min(second.get("lightness", 0.6), 0.5), second["chroma"], second["hue"]), low, 4.5,
                                       second["hue"], second["chroma"], darker=True)
+        if hl:
+            r["highlight"] = pick(hl["lightness"], hl["chroma"], hl["hue"])
+            r["highlight-text"] = ensure(pick(min(hl["lightness"], 0.5), hl["chroma"], hl["hue"]), low, 4.5, hl["hue"], hl["chroma"], darker=True)
         for name, hue in sem.items():
-            r[name] = ensure(pick(0.52, 0.15, hue), low, 4.5, hue, 0.15, darker=True)
-            r[name + "-tint"] = pick(0.95, 0.04, hue)
+            r[name] = ensure(pick(0.52, sc_sem, hue), low, 4.5, hue, sc_sem, darker=True)
+            r[name + "-tint"] = pick(0.95, min(0.04, sc_sem * 0.3), hue)
     else:
-        r["bg"] = pick(n.get("bg_lightness_dark", 0.2), min(nc, 0.02), nh)
-        r["surface"] = pick(r["bg"]["L"] + 0.035, min(nc, 0.022), nh)
+        r["bg"] = pick(n.get("bg_lightness_dark", 0.2), n.get("bg_chroma_dark", min(nc, 0.02)), nh)
+        sc = spec["color"].get("surface_colour")
+        r["surface"] = pick(sc["lightness_dark"], sc["chroma"] * 0.6, sc["hue"]) if sc and "lightness_dark" in sc else \
+            pick(r["bg"]["L"] + 0.035, max(r["bg"]["C"], min(nc, 0.022)), nh)
         r["sunken"] = pick(max(0.08, r["bg"]["L"] - 0.03), min(nc, 0.018), nh)
         r["border"] = pick(r["bg"]["L"] + 0.11, min(nc, 0.025), nh)
         r["border-strong"] = ensure(pick(r["bg"]["L"] + 0.34, min(nc, 0.03), nh), r["bg"], 3.0, nh, min(nc, 0.03), darker=False)
@@ -165,13 +226,23 @@ def roles(spec, mode):
         if second:
             sl = second.get("lightness_dark", min(0.82, max(second.get("lightness", 0.6) + 0.1, 0.7)))
             r["second"] = pick(sl, second["chroma"] * 0.9, second["hue"])
-            r["second-text"] = ensure(pick(sl, second["chroma"] * 0.9, second["hue"]), r["bg"], 4.5, second["hue"], second["chroma"] * 0.9, darker=False)
+            r["second-text"] = ensure(pick(sl, second["chroma"] * 0.9, second["hue"]), high, 4.5, second["hue"], second["chroma"] * 0.9, darker=False)
+        if hl:
+            hL = hl.get("lightness_dark", max(hl["lightness"], 0.72))
+            r["highlight"] = pick(hL, hl["chroma"] * 0.9, hl["hue"])
+            r["highlight-text"] = ensure(pick(hL, hl["chroma"] * 0.9, hl["hue"]), high, 4.5, hl["hue"], hl["chroma"] * 0.9, darker=False)
         for name, hue in sem.items():
-            r[name] = ensure(pick(0.75, 0.13, hue), high, 4.5, hue, 0.13, darker=False)
-            r[name + "-tint"] = pick(0.27, 0.05, hue)
+            r[name] = ensure(pick(0.75, sc_sem * 0.87, hue), high, 4.5, hue, sc_sem * 0.87, darker=False)
+            r[name + "-tint"] = pick(0.27, min(0.05, sc_sem * 0.35), hue)
     white, black = (1.0, 1.0, 1.0), (0.07, 0.07, 0.07)
-    on = white if wcag_contrast(white, r["accent"]["rgb"]) >= wcag_contrast(black, r["accent"]["rgb"]) else black
+    r["accent"], on = fill_for_text(r["accent"], ah, white, black)
+    r["accent-hover"] = pick(max(0.1, r["accent"]["L"] - 0.06) if on == white else min(0.97, r["accent"]["L"] + 0.06), r["accent"]["C"], ah)
     r["on-accent"] = {"hex": to_hex(on), "rgb": on, "L": 1.0 if on == white else 0.18, "C": 0, "H": 0}
+    if hl:
+        r["highlight"], on_h = fill_for_text(r["highlight"], hl["hue"], white, black)
+        r["on-highlight"] = {"hex": to_hex(on_h), "rgb": on_h, "L": 1.0 if on_h == white else 0.18, "C": 0, "H": 0}
+    for i, col in enumerate(chart_colours(spec, mode, r["bg"]), 1):
+        r[f"chart-{i}"] = col
     r["focus"] = r["accent-text"]
     if spec["color"].get("focus") == "ink":  # when the accent is not the action colour
         r["focus"] = r["text"]
@@ -194,6 +265,96 @@ def extra_colour(name, value):
         sys.exit(f"design.json: color.extra '{name}' is not a colour: {value!r}")
     L, c, h = srgb_to_oklch(*col[:3])
     return {"hex": to_hex(col), "rgb": tuple(col[:3]), "L": round(L, 3), "C": round(c, 4), "H": round(h, 1)}
+
+
+def fill_for_text(fill, hue, white, black):
+    """A fill that carries text (a button, a tag): keep its hue and chroma, and move its lightness the least distance
+    that lets white or near-black text reach 4.5:1 on it. Mid-lightness oranges and greens otherwise fail with both."""
+    best = max((white, black), key=lambda t: wcag_contrast(t, fill["rgb"]))
+    if wcag_contrast(best, fill["rgb"]) >= 4.58:
+        return fill, best
+    for step in range(1, 60):
+        for L, text in ((fill["L"] - step * 0.01, white), (fill["L"] + step * 0.01, black)):
+            if 0.05 < L < 0.98:
+                cand = pick(L, fill["C"], hue)
+                if wcag_contrast(text, cand["rgb"]) >= 4.58:
+                    return cand, text
+    return fill, best
+
+
+def semantic_hues(sem: dict, accent: dict) -> dict:
+    """Keep status colours apart from the primary: a semantic hue within 20 degrees of a coloured primary moves to the far
+    end of its own range (good stays green, bad stays red). Returns the hues to use."""
+    out = {}
+    for name, hue in sem.items():
+        lo, hi = SEMANTIC_RANGE.get(name, (hue, hue))
+        if accent.get("chroma", 0) >= 0.08 and hue_diff(hue, accent["hue"]) < 20:
+            far = max((lo, hi, hue), key=lambda h: hue_diff(h, accent["hue"]))
+            hue = far
+        out[name] = hue
+    return out
+
+
+def chart_colours(spec, mode, bg):
+    """Categorical chart colours from the palette: its own hues first, then hues spaced around the wheel, alternating in
+    lightness so neighbours separate for colour-blind readers, each at least 3:1 on the ground (WCAG 1.4.11)."""
+    c = spec["color"]
+    want = c.get("chart", 6)
+    if not want:
+        return []
+    base_c = min(0.16, max(0.1, c["accent"]["chroma"]))
+    if isinstance(want, list):
+        hues = [float(h) for h in want]
+    else:
+        hues = []
+        for key in ("accent", "second", "highlight"):
+            v = c.get(key)
+            if v and v.get("chroma", 0) >= 0.05 and all(hue_diff(v["hue"], h) >= 30 for h in hues):
+                hues.append(float(v["hue"]))
+        if not hues:
+            hues.append(float(c["accent"]["hue"]))
+        while len(hues) < int(want):
+            best = max(range(0, 360, 5), key=lambda h: min(hue_diff(h, x) for x in hues))
+            hues.append(float(best))
+    light = mode == "light"
+    out = []
+    for i, h in enumerate(hues):
+        L = (0.5 if i % 2 == 0 else 0.62) if light else (0.78 if i % 2 == 0 else 0.66)
+        cc = base_c if light else base_c * 0.9
+        out.append(ensure(pick(L, cc, h), bg, 3.0, h, cc, darker=light))
+    return out
+
+
+def palette_check(spec, data) -> dict:
+    """Harmony, colourfulness and competing pairs of the palette as built (light mode, or the first mode)."""
+    r = data["roles"][data["modes"][0]]
+    named = [("ground", r["bg"])]
+    if spec["color"].get("surface_colour"):
+        named.append(("surface", r["surface"]))
+    named += [(k, r[k]) for k in ("accent", "second", "highlight") if k in r]
+    named += [(k, r[k]) for k in data.get("extra", [])]
+    colours = [(v["L"], v["C"], v["H"], 1.0) for _k, v in named]
+    harmony, hues, note = classify_harmony(colours)
+    prof = chroma_profile([(v["L"], v["C"], v["H"]) for _k, v in named])
+    g = r["bg"]
+    carriers = [k for k, v in named if (k == "ground" and v["C"] >= 0.03) or (k != "ground" and is_chromatic(v["L"], v["C"], 0.06))]
+    strong = [(k, v["L"], v["C"], v["H"]) for k, v in named if k != "ground"]
+    deliberate = spec.get("deliberate") or {}
+    declared = (spec["color"].get("palette") or {}).get("harmony", "")
+    out = {"harmony": harmony, "hues": hues, "note": note, "declared": declared, "profile": prof, "carriers": carriers,
+           "competing": competing_pairs(strong), "timid": len(carriers) <= 1, "ground": g["hex"]}
+    out["timid_ok"] = "palette-timid" in deliberate
+    out["competing_ok"] = "palette-competing" in deliberate
+    charts = [r[k] for k in r if k.startswith("chart-")]
+    worst = None
+    for kind in ("deutan", "protan"):
+        for i in range(len(charts)):
+            for j in range(i + 1, min(len(charts), i + 3)):  # neighbours in a legend matter most
+                d = oklab_distance(simulate_cvd(charts[i]["rgb"], kind), simulate_cvd(charts[j]["rgb"], kind))
+                if worst is None or d < worst[0]:
+                    worst = (round(d, 3), kind, f"chart-{i + 1}", f"chart-{j + 1}")
+    out["chart_cvd"] = worst
+    return out
 
 
 def type_tokens(spec):
@@ -256,6 +417,7 @@ def fonts(spec):
 
 
 def build(spec):
+    spec = normalise(spec)
     for p in ("name", "type.display.family", "type.text.family", "type.sizes", "type.leading.text", "type.leading.display",
               "color.neutral.hue", "color.neutral.chroma", "color.accent.hue", "color.accent.chroma", "color.accent.lightness",
               "space.base", "space.steps", "radius", "shadow"):
@@ -273,6 +435,10 @@ def build(spec):
     second = spec["color"].get("second")
     if second:
         data["ramps"]["second"] = ramp(second["hue"], second["chroma"])
+    hl = spec["color"].get("highlight")
+    if hl:
+        data["ramps"]["highlight"] = ramp(hl["hue"], hl["chroma"])
+    data["palette"] = palette_check(spec, data)
     return data
 
 
@@ -292,7 +458,8 @@ def css_vars(data, selector_light=":root"):
     o += [f"  --space-{k}: {round(v / 16, 5):g}rem;" for k, v in data["space"].items()]
     o += [f"  --radius-{k}: {v}px;" for k, v in data["radius"].items()]
     o += [f"  --{k}: {v}{'ms' if isinstance(v, (int, float)) else ''};".replace("--ease", "--ease-out")
-          for k, v in ((f"dur-{k}" if k != "ease" else "ease", v) for k, v in data["motion"].items())]
+          for k, v in ((f"dur-{k}" if k != "ease" else "ease", v) for k, v in data["motion"].items())
+          if isinstance(v, (int, float)) or k == "ease"]
     for name, r in data["ramps"].items():
         o += [f"  --{name}-{s}: {v['hex']};" for s, v in r.items()]
     o += block(first) + ["}"]
@@ -367,7 +534,9 @@ def report(data):
         r = data["roles"][mode]
         pairs = [("text", "bg", 4.5), ("text", "surface", 4.5), ("text-muted", "bg", 4.5), ("text-subtle", "bg", 3.0),
                  ("accent-text", "bg", 4.5), ("on-accent", "accent", 4.5), ("border-strong", "bg", 3.0), ("focus", "bg", 3.0)]
-        pairs += [(k, "bg", 4.5) for k in r if k in ("good", "warn", "bad", "info")]
+        pairs += [(k, "bg", 4.5) for k in r if k in ("good", "warn", "bad", "info", "second-text", "highlight-text")]
+        pairs += [("on-highlight", "highlight", 4.5)] if "highlight" in r else []
+        pairs += [(k, "bg", 3.0) for k in r if k.startswith("chart-")]
         rows = []
         for fg, bg, target in pairs:
             ratio = wcag_contrast(r[fg]["rgb"], r[bg]["rgb"])
@@ -387,10 +556,36 @@ def report(data):
         o.append("Extra colours: " + ", ".join(f"--{k} {data['roles'][data['modes'][0]][k]['hex']}" for k in extra) + ".")
     if len(sizes) > 9:
         o.append(f"Note: {len(sizes)} sizes. Product UI rarely needs more than 6 or 7; every extra size weakens the hierarchy.")
+    o += [""] + palette_report(data["palette"])
     acc = data["roles"][data["modes"][0]]["accent"]
     if wcag_contrast(acc["rgb"], data["roles"][data["modes"][0]]["bg"]["rgb"]) < 3:
         o.append("Note: the accent itself is under 3:1 on the background. Use it for fills with on-accent text; use accent-text for links and icons.")
     return "\n".join(o)
+
+
+def palette_report(pc) -> list:
+    o = ["## Palette", "", f"Harmony: {pc['harmony']} ({pc['note']}; hue families at {', '.join(f'{h:.0f}' for h in pc['hues']) or 'none'})."]
+    said = re.split(r"[:(;,]", pc["declared"] or "")[0].strip().lower()
+    if said and not said.startswith("replace") and said != pc["harmony"]:
+        o.append(f"Declared harmony is \"{pc['declared']}\"; the built palette reads as {pc['harmony']}. Fix the roles or the declaration.")
+    p = pc["profile"]
+    o.append(f"Colourfulness: {p['level']} (strongest chroma {p['max']}, {p['chromatic']} colours carry a hue; colour comes from: "
+             f"{', '.join(pc['carriers']) or 'nothing'}).")
+    if pc["timid"]:
+        o.append(("Declared deliberate: " if pc["timid_ok"] else "ERROR timid palette: ") +
+                 "only one colour carries any hue; everything else is grey or near-white. Give a second colour a job (secondary, "
+                 "highlight, a coloured surface) or tint the ground from the subject, or record \"palette-timid\" under deliberate "
+                 "with the reason the subject needs this restraint.")
+    for a, b, d in pc["competing"]:
+        o.append(("Declared deliberate: " if pc["competing_ok"] else "ERROR competing colours: ") +
+                 f"{a} and {b} are {d} degrees apart at similar strength and lightness, so neither leads. Move one in lightness "
+                 "(at least 0.15), lower its chroma, or move its hue to a neighbour or an opposite; or record \"palette-competing\" "
+                 "under deliberate.")
+    if pc.get("chart_cvd"):
+        d, kind, x, y = pc["chart_cvd"]
+        o.append(f"Charts: closest neighbours for a {kind} reader are {x} and {y} (OKLab distance {d})." +
+                 (" Too close: add a pattern or label, or change the order." if d < 0.05 else ""))
+    return o
 
 
 def main(argv=None):
@@ -433,6 +628,9 @@ def main(argv=None):
         print("\nWrote: " + ", ".join(wrote))
     fails = [1 for m in data["modes"] for fg, bg, t in (("text", "bg", 4.5), ("text-muted", "bg", 4.5), ("on-accent", "accent", 4.5))
              if wcag_contrast(data["roles"][m][fg]["rgb"], data["roles"][m][bg]["rgb"]) < t]
+    pc = data["palette"]
+    if (pc["timid"] and not pc["timid_ok"]) or (pc["competing"] and not pc["competing_ok"]):
+        fails.append(1)
     return 2 if fails else 0
 
 

@@ -1,0 +1,1339 @@
+{
+ "_about": "Domain presets for palette.py: what users of a category rely on (keep), what the category does from habit (question), and a twist. Graded: the research says colour that fits the product is preferred; the logo counts say most of a category already uses the same hue. The conventions are practice unless an entry says otherwise. Checked 27 November 2026.",
+ "domains": [
+  {
+   "id": "dev-tools",
+   "name": "Developer tools",
+   "keywords": [
+    "developer",
+    "devtool",
+    "api",
+    "cli",
+    "sdk",
+    "infrastructure",
+    "hosting",
+    "database",
+    "observability",
+    "terminal",
+    "code",
+    "git",
+    "ci"
+   ],
+   "convention": "Dark mode as a first-class mode, often the default; high contrast for code; one signal hue for actions and the current item; status colours that mean pass, fail, running.",
+   "habit": "Near-black with one neon or an electric violet; or white with Tailwind blue. Both are the category's defaults.",
+   "twist": "Borrow the colours of the work itself: phosphor, a diff's green and red, warning amber, a terminal theme the audience already knows, the hardware's own paint.",
+   "prefer": {
+    "ground": "dark",
+    "dark_first": true,
+    "temperature": "either",
+    "chroma": [
+     "muted",
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "technical",
+     "serious",
+     "crafted",
+     "nocturnal"
+    ],
+    "avoid": [
+     "romantic",
+     "dreamy",
+     "soft",
+     "cosy"
+    ]
+   },
+   "cliche": [
+    "indigo",
+    "purple",
+    "blue"
+   ],
+   "evidence": [
+    "practice: developer tools lean dark and high-contrast with one signal hue (third-party descriptions of Linear, Vercel, Supabase)",
+    "vendor: midnight blue leads finance, healthcare and energy logos; black leads technology (Bynder, 15,388 logos)"
+   ],
+   "candidates": [
+    "hd-terminal-amber",
+    "hd-oxide",
+    "hd-diff-ledger",
+    "hd-workbench",
+    "figma-53",
+    "figma-1",
+    "figma-45",
+    "figma-70",
+    "figma-56",
+    "figma-51"
+   ]
+  },
+  {
+   "id": "ai",
+   "name": "AI products",
+   "keywords": [
+    "ai",
+    "llm",
+    "agent",
+    "assistant",
+    "chatbot",
+    "copilot",
+    "model",
+    "generative",
+    "gpt",
+    "machine learning"
+   ],
+   "convention": "A calm reading surface for long generated text; one clear action colour; visible states for thinking, streaming and done.",
+   "habit": "Violet-to-blue gradients, glow and glass on near-black. Users now read them as 'another AI wrapper'.",
+   "twist": "Take colour from the domain the AI serves (law, medicine, code, cooking), not from 'AI'; warm paper and ink read as considered.",
+   "prefer": {
+    "ground": "either",
+    "temperature": "either",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "friendly",
+     "crafted",
+     "calm",
+     "creative",
+     "technical"
+    ],
+    "avoid": [
+     "futuristic",
+     "nocturnal"
+    ]
+   },
+   "cliche": [
+    "purple",
+    "indigo",
+    "pink"
+   ],
+   "evidence": [
+    "practice: the purple gradient is a catalogued generated look (slop.md)",
+    "research: colour judged appropriate to the product type is preferred (Bottomley and Doyle 2006, Marketing Theory 6(1))"
+   ],
+   "candidates": [
+    "hd-paper-signal",
+    "hd-night-editor",
+    "figma-78",
+    "figma-19",
+    "figma-74",
+    "figma-68",
+    "figma-36",
+    "figma-41"
+   ]
+  },
+  {
+   "id": "b2b-saas",
+   "name": "B2B SaaS and productivity",
+   "keywords": [
+    "saas",
+    "b2b",
+    "dashboard",
+    "crm",
+    "project management",
+    "productivity",
+    "workflow",
+    "admin",
+    "analytics",
+    "team"
+   ],
+   "convention": "Neutral, readable surfaces for all-day use; a primary that marks actions; dense tables that need status colours and chart series.",
+   "habit": "Corporate blue on white grey, the colour of every other tab the user has open.",
+   "twist": "Pick a primary from the customer's work (a warehouse orange, a ledger green) and give a second colour a real job, such as the current filter or a highlight.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "calm",
+     "technical",
+     "friendly",
+     "trustworthy"
+    ],
+    "avoid": [
+     "romantic",
+     "dreamy",
+     "tropical"
+    ]
+   },
+   "cliche": [
+    "blue",
+    "indigo"
+   ],
+   "evidence": [
+    "vendor: midnight blue leads finance, healthcare and energy logos; black leads technology (Bynder, 15,388 logos)",
+    "research: colours map to brand personality, blue to competence, red to excitement (Labrecque and Milne 2012, JAMS 40)"
+   ],
+   "candidates": [
+    "hd-console",
+    "hd-workbench",
+    "figma-62",
+    "figma-89",
+    "figma-59",
+    "figma-57",
+    "figma-43",
+    "figma-79"
+   ]
+  },
+  {
+   "id": "fintech",
+   "name": "Fintech and banking",
+   "keywords": [
+    "bank",
+    "banking",
+    "fintech",
+    "payments",
+    "money",
+    "budget",
+    "finance",
+    "investing",
+    "invoice",
+    "accounting",
+    "wallet",
+    "card"
+   ],
+   "convention": "Trust and exactness: steady grounds, tabular figures, unmistakable gains and losses, nothing that looks like a game.",
+   "habit": "Navy and royal blue, or a challenger's purple; one is the old banks, the other every neobank since 2015.",
+   "twist": "Deep green, brass, oxblood or teal give trust without the house blue; money's own materials (notes, ledgers, brass) are a source.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "trustworthy",
+     "serious",
+     "elegant",
+     "calm"
+    ],
+    "avoid": [
+     "playful",
+     "dreamy",
+     "tropical",
+     "romantic"
+    ]
+   },
+   "cliche": [
+    "blue",
+    "indigo",
+    "purple"
+   ],
+   "evidence": [
+    "vendor: midnight blue leads finance, healthcare and energy logos; black leads technology (Bynder, 15,388 logos)",
+    "research: colours map to brand personality, blue to competence, red to excitement (Labrecque and Milne 2012, JAMS 40)",
+    "vendor: blue in over 75% of credit card logos (logo surveys)"
+   ],
+   "candidates": [
+    "hd-vault",
+    "hd-bourse",
+    "figma-57",
+    "figma-53",
+    "figma-80",
+    "figma-9",
+    "figma-59",
+    "figma-85"
+   ]
+  },
+  {
+   "id": "crypto",
+   "name": "Crypto and web3",
+   "keywords": [
+    "crypto",
+    "web3",
+    "blockchain",
+    "defi",
+    "nft",
+    "token",
+    "wallet",
+    "exchange",
+    "onchain"
+   ],
+   "convention": "Dark trading screens, live numbers, strong up and down colours.",
+   "habit": "Black with neon green or purple and glow: the default the whole category shares.",
+   "twist": "Keep the dark ground but drop the neon: soft mint, coral or a jewel tone reads as a product, not a casino.",
+   "prefer": {
+    "ground": "dark",
+    "dark_first": true,
+    "temperature": "either",
+    "chroma": [
+     "moderate",
+     "rich",
+     "neon"
+    ],
+    "moods": [
+     "futuristic",
+     "technical",
+     "nocturnal",
+     "bold"
+    ],
+    "avoid": [
+     "cosy",
+     "soft",
+     "romantic"
+    ]
+   },
+   "cliche": [
+    "purple",
+    "lime",
+    "green"
+   ],
+   "evidence": [
+    "practice: dark with a neon accent is a catalogued generated look (fingerprint.py)"
+   ],
+   "candidates": [
+    "hd-mint-condition",
+    "hd-bourse",
+    "figma-3",
+    "figma-55",
+    "figma-41",
+    "figma-51",
+    "figma-54"
+   ]
+  },
+  {
+   "id": "insurance",
+   "name": "Insurance",
+   "keywords": [
+    "insurance",
+    "insurer",
+    "claims",
+    "policy",
+    "cover",
+    "underwriting",
+    "pension"
+   ],
+   "convention": "Reassurance and plain language; forms that must feel safe; clear progress through claims.",
+   "habit": "Blue and white with stock-photo families.",
+   "twist": "Warmth (marigold, apricot, warm white) with a steady deep teal reads as 'we will help', which is what a claim needs.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "trustworthy",
+     "friendly",
+     "calm"
+    ],
+    "avoid": [
+     "dramatic",
+     "nocturnal",
+     "futuristic"
+    ]
+   },
+   "cliche": [
+    "blue"
+   ],
+   "evidence": [
+    "vendor: midnight blue leads finance, healthcare and energy logos; black leads technology (Bynder, 15,388 logos)",
+    "research: colours map to brand personality, blue to competence, red to excitement (Labrecque and Milne 2012, JAMS 40)"
+   ],
+   "candidates": [
+    "hd-underwriter",
+    "hd-care",
+    "figma-59",
+    "figma-89",
+    "figma-82",
+    "figma-73",
+    "figma-79"
+   ]
+  },
+  {
+   "id": "healthcare",
+   "name": "Healthcare",
+   "keywords": [
+    "health",
+    "healthcare",
+    "clinic",
+    "hospital",
+    "patient",
+    "doctor",
+    "medical",
+    "pharmacy",
+    "telehealth",
+    "ehr",
+    "nurse"
+   ],
+   "convention": "Clinical clarity, calm, very high legibility; red reserved for real danger; colour never the only signal.",
+   "habit": "Hospital blue and white everywhere.",
+   "twist": "Teal, sea green or a warm ground with one human warm colour (coral, apricot) keeps calm without the institutional blue.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "cool",
+    "chroma": [
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "clinical",
+     "calm",
+     "trustworthy",
+     "fresh",
+     "soft"
+    ],
+    "avoid": [
+     "dramatic",
+     "nocturnal",
+     "urgent",
+     "bold"
+    ]
+   },
+   "cliche": [
+    "blue"
+   ],
+   "evidence": [
+    "vendor: blue in about 85% of popular healthcare logos (99designs, reported by The Drum, 2018)",
+    "vendor: midnight blue leads finance, healthcare and energy logos; black leads technology (Bynder, 15,388 logos)",
+    "vendor: green tested well in health and wellness A/B tests (Neil Patel, 6,306 tests)"
+   ],
+   "candidates": [
+    "hd-clinic",
+    "hd-care",
+    "figma-77",
+    "figma-84",
+    "figma-72",
+    "figma-89",
+    "figma-81"
+   ]
+  },
+  {
+   "id": "wellness",
+   "name": "Mental health and wellness",
+   "keywords": [
+    "wellness",
+    "meditation",
+    "mindfulness",
+    "therapy",
+    "mental health",
+    "sleep",
+    "yoga",
+    "journal",
+    "calm",
+    "self-care"
+   ],
+   "convention": "Low arousal: soft grounds, low chroma, slow motion; dark modes for night use.",
+   "habit": "Lavender and sage pastels with a serif, the current wellness template.",
+   "twist": "Colour from a real place or practice (clay, dusk, eucalyptus, a temple's ochre) and a confident deep tone, not only pastel.",
+   "prefer": {
+    "ground": "either",
+    "temperature": "either",
+    "chroma": [
+     "greyscale",
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "calm",
+     "soft",
+     "natural",
+     "dreamy",
+     "organic"
+    ],
+    "avoid": [
+     "urgent",
+     "bold",
+     "energetic"
+    ]
+   },
+   "cliche": [
+    "purple",
+    "green"
+   ],
+   "evidence": [
+    "practice: soft low-chroma palettes for calming products",
+    "inference"
+   ],
+   "candidates": [
+    "figma-88",
+    "figma-76",
+    "figma-75",
+    "figma-24",
+    "figma-68",
+    "figma-11",
+    "figma-83",
+    "figma-61"
+   ]
+  },
+  {
+   "id": "fitness",
+   "name": "Fitness and sport",
+   "keywords": [
+    "fitness",
+    "gym",
+    "workout",
+    "running",
+    "sport",
+    "training",
+    "cycling",
+    "coach",
+    "athlete"
+   ],
+   "convention": "Energy and progress: strong primaries, high contrast, often dark for outdoor and night use.",
+   "habit": "Black with neon lime or orange, every tracker's look.",
+   "twist": "Take the sport's own kit and ground (clay court, track red, pool blue, chalk) and keep the energy with chroma, not glow.",
+   "prefer": {
+    "ground": "either",
+    "temperature": "either",
+    "chroma": [
+     "rich",
+     "neon"
+    ],
+    "moods": [
+     "energetic",
+     "bold",
+     "sporty",
+     "fresh"
+    ],
+    "avoid": [
+     "dreamy",
+     "soft",
+     "cosy",
+     "elegant"
+    ]
+   },
+   "cliche": [
+    "lime",
+    "orange"
+   ],
+   "evidence": [
+    "research: colours map to brand personality, blue to competence, red to excitement (Labrecque and Milne 2012, JAMS 40)",
+    "practice"
+   ],
+   "candidates": [
+    "figma-39",
+    "figma-46",
+    "figma-5",
+    "figma-29",
+    "figma-34",
+    "figma-6",
+    "figma-92"
+   ]
+  },
+  {
+   "id": "education",
+   "name": "Education and language learning",
+   "keywords": [
+    "education",
+    "learning",
+    "course",
+    "school",
+    "tutor",
+    "language",
+    "study",
+    "lesson",
+    "quiz",
+    "flashcard",
+    "edtech"
+   ],
+   "convention": "Encouraging and clear; progress and streaks; correct and incorrect must read instantly; long sessions need a calm ground.",
+   "habit": "One cartoon green, or a primary-colour rainbow on white.",
+   "twist": "Colour from the subject being learnt (a country's tiles and stamps for a language, chalk and graph paper for maths) and warm, confident primaries.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "friendly",
+     "cheerful",
+     "playful",
+     "youthful",
+     "crafted"
+    ],
+    "avoid": [
+     "dramatic",
+     "nocturnal",
+     "luxurious"
+    ]
+   },
+   "cliche": [
+    "green",
+    "blue"
+   ],
+   "evidence": [
+    "research: colour judged appropriate to the product type is preferred (Bottomley and Doyle 2006, Marketing Theory 6(1))",
+    "practice"
+   ],
+   "candidates": [
+    "figma-36",
+    "figma-28",
+    "figma-29",
+    "figma-92",
+    "figma-78",
+    "hd-lab-notebook",
+    "figma-19",
+    "figma-100"
+   ]
+  },
+  {
+   "id": "kids",
+   "name": "Kids and family",
+   "keywords": [
+    "kids",
+    "children",
+    "family",
+    "parenting",
+    "toys",
+    "baby",
+    "toddler",
+    "school age"
+   ],
+   "convention": "Bright, friendly, big targets; parents also need a calmer layer for settings and payment.",
+   "habit": "Saturated rainbow on white with every colour at equal weight.",
+   "twist": "A few strong colours with a lead, and the parents' layer in a quieter ground from the same palette.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "rich",
+     "neon"
+    ],
+    "moods": [
+     "playful",
+     "cheerful",
+     "youthful",
+     "soft"
+    ],
+    "avoid": [
+     "serious",
+     "dramatic",
+     "nocturnal",
+     "industrial"
+    ]
+   },
+   "cliche": [],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-97",
+    "figma-38",
+    "figma-15",
+    "figma-28",
+    "figma-100",
+    "figma-37",
+    "figma-32"
+   ]
+  },
+  {
+   "id": "food",
+   "name": "Food and restaurants",
+   "keywords": [
+    "food",
+    "restaurant",
+    "cafe",
+    "bakery",
+    "recipe",
+    "kitchen",
+    "menu",
+    "dining",
+    "bar",
+    "coffee",
+    "chef"
+   ],
+   "convention": "Appetite: warm reds, oranges, browns and creams; photographs of the food carry the page.",
+   "habit": "Red and yellow fast-food signalling, or cream, serif and terracotta for anything artisan.",
+   "twist": "Colour from this kitchen: its tiles, its signature dish, its awning, its packaging; let the food photographs set the accent.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "appetising",
+     "cosy",
+     "artisanal",
+     "earthy",
+     "warm"
+    ],
+    "avoid": [
+     "clinical",
+     "technical",
+     "nocturnal",
+     "futuristic"
+    ]
+   },
+   "cliche": [
+    "red",
+    "orange"
+   ],
+   "evidence": [
+    "research: colour judged appropriate to the product type is preferred (Bottomley and Doyle 2006, Marketing Theory 6(1))",
+    "practice: cream with a serif and terracotta is a catalogued generated look"
+   ],
+   "candidates": [
+    "figma-6",
+    "figma-27",
+    "figma-40",
+    "figma-23",
+    "figma-98",
+    "figma-7",
+    "figma-95",
+    "figma-71",
+    "figma-69"
+   ]
+  },
+  {
+   "id": "grocery",
+   "name": "Grocery and delivery",
+   "keywords": [
+    "grocery",
+    "delivery",
+    "supermarket",
+    "produce",
+    "meal kit",
+    "farm",
+    "market",
+    "organic"
+   ],
+   "convention": "Freshness, speed and scannable product grids; green and produce colours; strong add-to-cart.",
+   "habit": "Supermarket green and white.",
+   "twist": "Use the produce itself: beetroot, citrus, leaf; a second colour for offers that is not alarm red.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "fresh",
+     "natural",
+     "appetising",
+     "organic",
+     "cheerful"
+    ],
+    "avoid": [
+     "nocturnal",
+     "dramatic",
+     "luxurious"
+    ]
+   },
+   "cliche": [
+    "green"
+   ],
+   "evidence": [
+    "research: colour judged appropriate to the product type is preferred (Bottomley and Doyle 2006, Marketing Theory 6(1))",
+    "practice"
+   ],
+   "candidates": [
+    "figma-4",
+    "figma-40",
+    "figma-30",
+    "figma-96",
+    "figma-5",
+    "figma-94",
+    "figma-86"
+   ]
+  },
+  {
+   "id": "fashion",
+   "name": "Fashion",
+   "keywords": [
+    "fashion",
+    "clothing",
+    "apparel",
+    "streetwear",
+    "boutique",
+    "designer",
+    "wardrobe",
+    "shoes"
+   ],
+   "convention": "The garments and photographs carry colour; the interface stays neutral and steps back.",
+   "habit": "Black, white and one beige, the luxury-template look.",
+   "twist": "A neutral that belongs to the label (a tissue paper, a shop interior) and one colour from the current collection, changed per season.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "greyscale",
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "elegant",
+     "minimal",
+     "romantic",
+     "urban",
+     "dramatic"
+    ],
+    "avoid": [
+     "clinical",
+     "technical",
+     "cheerful"
+    ]
+   },
+   "cliche": [],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-8",
+    "figma-25",
+    "figma-60",
+    "figma-12",
+    "figma-50",
+    "figma-58",
+    "figma-55"
+   ]
+  },
+  {
+   "id": "beauty",
+   "name": "Beauty and personal care",
+   "keywords": [
+    "beauty",
+    "cosmetics",
+    "skincare",
+    "makeup",
+    "salon",
+    "spa",
+    "fragrance",
+    "nails",
+    "hair"
+   ],
+   "convention": "Skin-adjacent warm neutrals and soft colour; product photography leads.",
+   "habit": "Millennial pink and gold.",
+   "twist": "The product's own colours (a serum's amber, a lipstick range) and a deeper tone for type and action.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "muted",
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "soft",
+     "elegant",
+     "romantic",
+     "luxurious",
+     "fresh"
+    ],
+    "avoid": [
+     "technical",
+     "industrial",
+     "nocturnal"
+    ]
+   },
+   "cliche": [
+    "pink"
+   ],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-26",
+    "figma-24",
+    "figma-60",
+    "figma-21",
+    "figma-16",
+    "figma-48",
+    "figma-25"
+   ]
+  },
+  {
+   "id": "luxury",
+   "name": "Luxury and premium goods",
+   "keywords": [
+    "luxury",
+    "premium",
+    "jewellery",
+    "jewelry",
+    "watch",
+    "hotel",
+    "high-end",
+    "couture",
+    "wine",
+    "spirits"
+   ],
+   "convention": "Restraint, depth and a few rich colours; a lot of space; nothing that looks discounted.",
+   "habit": "Black and gold, or black, white and a serif.",
+   "twist": "Jewel tones, oxblood, deep green or the house's own material (leather, lacquer, stone) at full depth.",
+   "prefer": {
+    "ground": "either",
+    "temperature": "either",
+    "chroma": [
+     "muted",
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "luxurious",
+     "elegant",
+     "dramatic"
+    ],
+    "avoid": [
+     "playful",
+     "cheerful",
+     "youthful",
+     "sporty"
+    ]
+   },
+   "cliche": [
+    "amber",
+    "yellow"
+   ],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-55",
+    "figma-13",
+    "figma-9",
+    "figma-7",
+    "figma-60",
+    "figma-58",
+    "figma-20",
+    "figma-3"
+   ]
+  },
+  {
+   "id": "home",
+   "name": "Home and interiors",
+   "keywords": [
+    "home",
+    "interior",
+    "furniture",
+    "decor",
+    "architecture",
+    "renovation",
+    "garden",
+    "kitchen design"
+   ],
+   "convention": "Materials: wood, stone, linen, plaster; warm neutrals; rooms in photographs set the mood.",
+   "habit": "Beige, sage and terracotta, the interiors-blog palette.",
+   "twist": "Sample this brand's materials and rooms; one confident colour from a product (a lacquered chair, a tile glaze).",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "earthy",
+     "calm",
+     "crafted",
+     "cosy",
+     "natural"
+    ],
+    "avoid": [
+     "futuristic",
+     "neon",
+     "urgent"
+    ]
+   },
+   "cliche": [],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-67",
+    "figma-68",
+    "figma-64",
+    "figma-61",
+    "figma-18",
+    "figma-11",
+    "figma-86",
+    "figma-63"
+   ]
+  },
+  {
+   "id": "travel",
+   "name": "Travel and hospitality",
+   "keywords": [
+    "travel",
+    "hotel",
+    "booking",
+    "trip",
+    "airline",
+    "flight",
+    "tourism",
+    "vacation",
+    "holiday",
+    "hostel"
+   ],
+   "convention": "Destination photography leads; light warm grounds; clear booking actions.",
+   "habit": "Sky blue and sunset orange on everything.",
+   "twist": "Colour from the places sold (a coast's tiles, a city's transport livery), changed by destination, with one constant action colour.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "warm",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "warm",
+     "fresh",
+     "calm",
+     "tropical",
+     "cheerful"
+    ],
+    "avoid": [
+     "clinical",
+     "industrial",
+     "nocturnal"
+    ]
+   },
+   "cliche": [
+    "cyan",
+    "blue",
+    "orange"
+   ],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-22",
+    "figma-29",
+    "figma-87",
+    "figma-27",
+    "figma-52",
+    "figma-82",
+    "figma-94"
+   ]
+  },
+  {
+   "id": "real-estate",
+   "name": "Real estate and property",
+   "keywords": [
+    "real estate",
+    "property",
+    "rent",
+    "rental",
+    "housing",
+    "mortgage",
+    "apartment",
+    "estate agent",
+    "listing"
+   ],
+   "convention": "Photographs and maps lead; trust; prices and figures readable at a glance.",
+   "habit": "Navy and gold, or teal and grey.",
+   "twist": "The city's own materials (brick, concrete, sandstone) as neutrals and one accent from its signage or transport.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "trustworthy",
+     "calm",
+     "urban",
+     "industrial",
+     "elegant"
+    ],
+    "avoid": [
+     "playful",
+     "neon",
+     "dreamy"
+    ]
+   },
+   "cliche": [
+    "blue"
+   ],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-70",
+    "figma-87",
+    "figma-67",
+    "figma-62",
+    "figma-57",
+    "hd-counsel",
+    "figma-59"
+   ]
+  },
+  {
+   "id": "legal-gov",
+   "name": "Legal and government",
+   "keywords": [
+    "legal",
+    "law",
+    "lawyer",
+    "government",
+    "public service",
+    "council",
+    "tax",
+    "compliance",
+    "court",
+    "citizen"
+   ],
+   "convention": "Plainness, accessibility at AAA where possible, obvious focus states, no decoration; trust through clarity.",
+   "habit": "Institutional navy and a crest.",
+   "twist": "Plain grounds with one strong action colour and a signal-yellow focus (a public-service convention); for advisory firms, oxblood and ivory.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "greyscale",
+     "muted",
+     "moderate"
+    ],
+    "moods": [
+     "serious",
+     "trustworthy",
+     "minimal",
+     "elegant"
+    ],
+    "avoid": [
+     "playful",
+     "dreamy",
+     "tropical",
+     "neon"
+    ]
+   },
+   "cliche": [
+    "blue"
+   ],
+   "evidence": [
+    "research: colours map to brand personality, blue to competence, red to excitement (Labrecque and Milne 2012, JAMS 40)",
+    "practice: public-service design systems use a yellow focus ring (for example GOV.UK)"
+   ],
+   "candidates": [
+    "hd-civic",
+    "hd-counsel",
+    "figma-57",
+    "figma-85",
+    "figma-62",
+    "figma-8",
+    "figma-1"
+   ]
+  },
+  {
+   "id": "climate",
+   "name": "Climate, energy and sustainability",
+   "keywords": [
+    "climate",
+    "energy",
+    "solar",
+    "sustainability",
+    "carbon",
+    "renewable",
+    "ev",
+    "battery",
+    "environment",
+    "recycling"
+   ],
+   "convention": "Nature and optimism without cliché; data and charts carry the argument.",
+   "habit": "Leaf green on white with a globe.",
+   "twist": "Energy's own colours (solar orange, copper, grid yellow) beside a deep green, or the landscape of one place.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "fresh",
+     "natural",
+     "energetic",
+     "organic"
+    ],
+    "avoid": [
+     "luxurious",
+     "nocturnal",
+     "romantic"
+    ]
+   },
+   "cliche": [
+    "green"
+   ],
+   "evidence": [
+    "vendor: midnight blue leads finance, healthcare and energy logos; black leads technology (Bynder, 15,388 logos)",
+    "practice"
+   ],
+   "candidates": [
+    "hd-grid",
+    "figma-86",
+    "figma-80",
+    "figma-96",
+    "figma-2",
+    "figma-92",
+    "figma-61"
+   ]
+  },
+  {
+   "id": "media",
+   "name": "Media, news and publishing",
+   "keywords": [
+    "news",
+    "media",
+    "magazine",
+    "publishing",
+    "journalism",
+    "newsletter",
+    "blog",
+    "podcast",
+    "editorial"
+   ],
+   "convention": "Text first: high contrast for long reading, one strong colour for the masthead, sections or breaking news.",
+   "habit": "Cream, a serif and a red; the editorial template.",
+   "twist": "A section or masthead colour from the publication's own history or city; colour coding by section with a lead hue.",
+   "prefer": {
+    "ground": "light",
+    "temperature": "either",
+    "chroma": [
+     "greyscale",
+     "muted",
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "serious",
+     "bold",
+     "urgent",
+     "minimal",
+     "retro"
+    ],
+    "avoid": [
+     "dreamy",
+     "soft",
+     "tropical"
+    ]
+   },
+   "cliche": [
+    "red"
+   ],
+   "evidence": [
+    "practice: cream, serif and red is a catalogued generated look"
+   ],
+   "candidates": [
+    "hd-wire",
+    "figma-8",
+    "figma-45",
+    "figma-70",
+    "figma-49",
+    "figma-58",
+    "figma-36"
+   ]
+  },
+  {
+   "id": "music-gaming",
+   "name": "Music, gaming and entertainment",
+   "keywords": [
+    "music",
+    "gaming",
+    "game",
+    "esports",
+    "streaming",
+    "concert",
+    "festival",
+    "artist",
+    "label",
+    "nightlife",
+    "cinema"
+   ],
+   "convention": "Dark, immersive grounds; artwork and media lead; colour can be loud.",
+   "habit": "Neon on black with glitch effects.",
+   "twist": "The artwork's own palette per release or game; a house colour that is not neon green or violet.",
+   "prefer": {
+    "ground": "dark",
+    "dark_first": true,
+    "temperature": "either",
+    "chroma": [
+     "rich",
+     "neon"
+    ],
+    "moods": [
+     "bold",
+     "dramatic",
+     "nocturnal",
+     "playful",
+     "energetic"
+    ],
+    "avoid": [
+     "clinical",
+     "calm",
+     "minimal"
+    ]
+   },
+   "cliche": [
+    "purple",
+    "lime"
+   ],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "figma-42",
+    "figma-51",
+    "figma-54",
+    "figma-44",
+    "figma-47",
+    "figma-50",
+    "hd-night-editor",
+    "figma-10"
+   ]
+  },
+  {
+   "id": "creative-tools",
+   "name": "Creative tools and design",
+   "keywords": [
+    "design tool",
+    "creative",
+    "editor",
+    "canvas",
+    "illustration",
+    "photo",
+    "video",
+    "figma",
+    "prototyping",
+    "portfolio"
+   ],
+   "convention": "A neutral canvas so the user's work is the colour; the chrome steps back; one tool colour for selection.",
+   "habit": "Grey chrome and a blue selection.",
+   "twist": "A playful palette in the marketing and the empty states, and a quiet one in the canvas; a selection colour that is the brand.",
+   "prefer": {
+    "ground": "either",
+    "temperature": "either",
+    "chroma": [
+     "moderate",
+     "rich"
+    ],
+    "moods": [
+     "creative",
+     "playful",
+     "crafted",
+     "bold"
+    ],
+    "avoid": [
+     "clinical",
+     "serious"
+    ]
+   },
+   "cliche": [
+    "blue"
+   ],
+   "evidence": [
+    "practice"
+   ],
+   "candidates": [
+    "hd-night-editor",
+    "figma-19",
+    "figma-49",
+    "figma-78",
+    "figma-74",
+    "figma-10",
+    "figma-36",
+    "figma-14"
+   ]
+  }
+ ]
+}

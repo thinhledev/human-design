@@ -1,0 +1,2146 @@
+{
+ "_about": "Colour combinations for palette.py. figma-* are the 100 combinations at figma.com/resource-library/color-combinations (checked 27 November 2026): name, group and the hex codes printed on each palette image, with a link to its section; the tags are this skill's reading, not Figma's text. hd-* are this skill's own, for domains Figma's set leaves thin (grade: inference). Harmony, chroma, temperature and roles are computed by palette.py, not stored.",
+ "combinations": [
+  {
+   "id": "figma-1",
+   "name": "Stormy morning",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-1-stormy-morning",
+   "colours": [
+    "#6A89A7",
+    "#BDDDFC",
+    "#88BDF2",
+    "#384959"
+   ],
+   "tags": [
+    "trustworthy",
+    "calm",
+    "serious",
+    "technical"
+   ]
+  },
+  {
+   "id": "figma-2",
+   "name": "Mossy hollow",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-2-mossy-hollow",
+   "colours": [
+    "#636B2F",
+    "#BAC095",
+    "#D4DE95",
+    "#3D4127"
+   ],
+   "tags": [
+    "earthy",
+    "natural",
+    "calm",
+    "organic"
+   ]
+  },
+  {
+   "id": "figma-3",
+   "name": "Blue eclipse",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-3-blue-eclipse",
+   "colours": [
+    "#272757",
+    "#8686AC",
+    "#505081",
+    "#0F0E47"
+   ],
+   "tags": [
+    "serious",
+    "nocturnal",
+    "elegant",
+    "technical"
+   ]
+  },
+  {
+   "id": "figma-4",
+   "name": "Lush forest",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-4-lush-forest",
+   "colours": [
+    "#2E6F40",
+    "#CFFFDC",
+    "#68BA7F",
+    "#253D2C"
+   ],
+   "tags": [
+    "natural",
+    "fresh",
+    "organic",
+    "calm"
+   ]
+  },
+  {
+   "id": "figma-5",
+   "name": "Green juice",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-5-green-juice",
+   "colours": [
+    "#4CBB17",
+    "#48872B",
+    "#39542C",
+    "#293325"
+   ],
+   "tags": [
+    "fresh",
+    "energetic",
+    "natural",
+    "sporty"
+   ]
+  },
+  {
+   "id": "figma-6",
+   "name": "Chili spice",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-6-chili-spice",
+   "colours": [
+    "#CD1C18",
+    "#FFA896",
+    "#9B1313",
+    "#38000A"
+   ],
+   "tags": [
+    "bold",
+    "energetic",
+    "urgent",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-7",
+   "name": "Chocolate truffle",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-7-chocolate-truffle",
+   "colours": [
+    "#713600",
+    "#C05800",
+    "#FDFBD4",
+    "#38240D"
+   ],
+   "tags": [
+    "cosy",
+    "luxurious",
+    "appetising",
+    "artisanal"
+   ]
+  },
+  {
+   "id": "figma-8",
+   "name": "Ink wash",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-8-ink-wash",
+   "colours": [
+    "#4A4A4A",
+    "#CBCBCB",
+    "#FFFFE3",
+    "#6D8196"
+   ],
+   "tags": [
+    "minimal",
+    "serious",
+    "elegant"
+   ]
+  },
+  {
+   "id": "figma-9",
+   "name": "Golden taupe",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-9-golden-taupe",
+   "colours": [
+    "#D4AF37",
+    "#BDB76B",
+    "#FDFBD4",
+    "#CE8946"
+   ],
+   "tags": [
+    "luxurious",
+    "elegant"
+   ]
+  },
+  {
+   "id": "figma-10",
+   "name": "Wisteria bloom",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-10-wisteria-bloom",
+   "colours": [
+    "#D3D3FF",
+    "#9400D3",
+    "#D8BFD8",
+    "#ED80E9"
+   ],
+   "tags": [
+    "dreamy",
+    "romantic",
+    "creative"
+   ]
+  },
+  {
+   "id": "figma-11",
+   "name": "Burnt sienna",
+   "source": "figma",
+   "group": "monochromatic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-11-burnt-sienna",
+   "colours": [
+    "#E35336",
+    "#F5F5DC",
+    "#F4A460",
+    "#A0522D"
+   ],
+   "tags": [
+    "earthy",
+    "artisanal"
+   ]
+  },
+  {
+   "id": "figma-12",
+   "name": "Blooming romance",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-12-blooming-romance",
+   "colours": [
+    "#660033",
+    "#E673AC",
+    "#469110",
+    "#00520A"
+   ],
+   "tags": [
+    "romantic",
+    "luxurious",
+    "dramatic"
+   ]
+  },
+  {
+   "id": "figma-13",
+   "name": "Desert dusk",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-13-desert-dusk",
+   "colours": [
+    "#A2574F",
+    "#E68057",
+    "#BF7587",
+    "#993A8B"
+   ],
+   "tags": [
+    "luxurious",
+    "elegant"
+   ]
+  },
+  {
+   "id": "figma-14",
+   "name": "Lavender fields",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-14-lavender-fields",
+   "colours": [
+    "#FDFBD4",
+    "#BDB96A",
+    "#C1BFFF",
+    "#CF6DFC"
+   ],
+   "tags": [
+    "dreamy",
+    "soft",
+    "playful"
+   ]
+  },
+  {
+   "id": "figma-15",
+   "name": "Hydrangea",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-15-hydrangea",
+   "colours": [
+    "#FF8DA1",
+    "#FFC2BA",
+    "#FF9CE9",
+    "#AD56C4"
+   ],
+   "tags": [
+    "playful",
+    "youthful",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-16",
+   "name": "Cactus flower",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-16-cactus-flower",
+   "colours": [
+    "#E491A6",
+    "#845763",
+    "#92E4BA",
+    "#90C67F"
+   ],
+   "tags": [
+    "romantic",
+    "natural",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-17",
+   "name": "Wildflowers",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-17-wildflowers",
+   "colours": [
+    "#A8DCAB",
+    "#519755",
+    "#DBAAA7",
+    "#BE91BE"
+   ],
+   "tags": [
+    "natural",
+    "calm",
+    "soft",
+    "retro"
+   ]
+  },
+  {
+   "id": "figma-18",
+   "name": "Country garden",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-18-country-garden",
+   "colours": [
+    "#FFFFE3",
+    "#DBD4FF",
+    "#808034",
+    "#723480"
+   ],
+   "tags": [
+    "calm",
+    "elegant",
+    "natural"
+   ]
+  },
+  {
+   "id": "figma-19",
+   "name": "Lotus garden",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-19-lotus-garden",
+   "colours": [
+    "#ADEBB3",
+    "#FF857A",
+    "#EBAEE6",
+    "#6B403C"
+   ],
+   "tags": [
+    "creative",
+    "playful",
+    "fresh"
+   ]
+  },
+  {
+   "id": "figma-20",
+   "name": "Iris garden",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-20-iris-garden",
+   "colours": [
+    "#A47DAB",
+    "#692475",
+    "#82AB7D",
+    "#6A6B4E"
+   ],
+   "tags": [
+    "elegant",
+    "natural",
+    "luxurious"
+   ]
+  },
+  {
+   "id": "figma-21",
+   "name": "Fresh peach",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-21-fresh-peach",
+   "colours": [
+    "#FFD3AC",
+    "#FFB5AB",
+    "#E39A7B",
+    "#DBB06B"
+   ],
+   "tags": [
+    "soft",
+    "friendly"
+   ]
+  },
+  {
+   "id": "figma-22",
+   "name": "Golden hour",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-22-golden-hour",
+   "colours": [
+    "#FFBF00",
+    "#CFB53B",
+    "#E0B0FF",
+    "#EDEDC8"
+   ],
+   "tags": [
+    "calm",
+    "dreamy"
+   ],
+   "note": "Figma's label for the fourth swatch reads #CC550 (five digits); this is the colour measured from its image."
+  },
+  {
+   "id": "figma-23",
+   "name": "Spiced chai",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-23-spiced-chai",
+   "colours": [
+    "#FDFBD4",
+    "#D47E30",
+    "#8D5A2B",
+    "#825E34"
+   ],
+   "tags": [
+    "cosy",
+    "appetising",
+    "friendly"
+   ]
+  },
+  {
+   "id": "figma-24",
+   "name": "Cherry blossom",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-24-cherry-blossom",
+   "colours": [
+    "#F2C7C7",
+    "#FFFFFF",
+    "#D5F3D8",
+    "#FFB7C5"
+   ],
+   "tags": [
+    "soft",
+    "fresh",
+    "gentle"
+   ]
+  },
+  {
+   "id": "figma-25",
+   "name": "Evening rose",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-25-evening-rose",
+   "colours": [
+    "#DCA1A1",
+    "#996666",
+    "#8E4585",
+    "#4A4A4A"
+   ],
+   "tags": [
+    "romantic",
+    "elegant",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-26",
+   "name": "Pastel garden",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-26-pastel-garden",
+   "colours": [
+    "#C75F71",
+    "#F0B8B8",
+    "#A2AE9D",
+    "#54463A"
+   ],
+   "tags": [
+    "elegant",
+    "soft",
+    "romantic"
+   ]
+  },
+  {
+   "id": "figma-27",
+   "name": "Tuscan sunset",
+   "source": "figma",
+   "group": "romantic",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-27-tuscan-sunset",
+   "colours": [
+    "#E35336",
+    "#FFD3AC",
+    "#9988A1",
+    "#8A2B0E"
+   ],
+   "tags": [
+    "earthy",
+    "elegant",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-28",
+   "name": "Zesty lemon",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-28-zesty-lemon",
+   "colours": [
+    "#FFFF66",
+    "#FFE566",
+    "#D6D58B",
+    "#B3B347"
+   ],
+   "tags": [
+    "playful",
+    "youthful",
+    "cheerful"
+   ]
+  },
+  {
+   "id": "figma-29",
+   "name": "California beaches",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-29-california-beaches",
+   "colours": [
+    "#FFC067",
+    "#66F4FF",
+    "#66C4FF",
+    "#7D99AA"
+   ],
+   "tags": [
+    "energetic",
+    "playful",
+    "fresh"
+   ]
+  },
+  {
+   "id": "figma-30",
+   "name": "Freshly squeezed",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-30-freshly-squeezed",
+   "colours": [
+    "#FFBF00",
+    "#F2CF7E",
+    "#FFE642",
+    "#FF7900"
+   ],
+   "tags": [
+    "energetic",
+    "cheerful",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-31",
+   "name": "Pistachio dream",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-31-pistachio-dream",
+   "colours": [
+    "#80EF80",
+    "#E3F0A3",
+    "#BADBA2",
+    "#42D674"
+   ],
+   "tags": [
+    "fresh",
+    "calm",
+    "youthful"
+   ]
+  },
+  {
+   "id": "figma-32",
+   "name": "Mango popsicle",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-32-mango-popsicle",
+   "colours": [
+    "#F2B949",
+    "#EDD377",
+    "#F2E829",
+    "#F27430"
+   ],
+   "tags": [
+    "playful",
+    "cheerful",
+    "tropical"
+   ]
+  },
+  {
+   "id": "figma-33",
+   "name": "Guava",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-33-guava",
+   "colours": [
+    "#FF8559",
+    "#FFB578",
+    "#E65447",
+    "#CF5376"
+   ],
+   "tags": [
+    "tropical",
+    "playful"
+   ]
+  },
+  {
+   "id": "figma-34",
+   "name": "Glowing horizon",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-34-glowing-horizon",
+   "colours": [
+    "#FFB343",
+    "#42EAFF",
+    "#4272FF",
+    "#FF7E42"
+   ],
+   "tags": [
+    "energetic",
+    "bold",
+    "cheerful"
+   ]
+  },
+  {
+   "id": "figma-35",
+   "name": "Sunny day",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-35-sunny-day",
+   "colours": [
+    "#FFBF00",
+    "#807040",
+    "#007EFF",
+    "#2400FF"
+   ],
+   "tags": [
+    "bold",
+    "energetic",
+    "friendly"
+   ]
+  },
+  {
+   "id": "figma-36",
+   "name": "Retro sunset",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-36-retro-sunset",
+   "colours": [
+    "#BE5103",
+    "#FFCE1B",
+    "#069494",
+    "#B7410E"
+   ],
+   "tags": [
+    "retro",
+    "bold"
+   ]
+  },
+  {
+   "id": "figma-37",
+   "name": "Bubblegum pop",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-37-bubblegum-pop",
+   "colours": [
+    "#FF69B4",
+    "#069494",
+    "#FFFFFF",
+    "#00F0FF"
+   ],
+   "tags": [
+    "playful",
+    "retro",
+    "youthful"
+   ]
+  },
+  {
+   "id": "figma-38",
+   "name": "Cotton candy skies",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-38-cotton-candy-skies",
+   "colours": [
+    "#B298E7",
+    "#B8E3E9",
+    "#F5B8D5",
+    "#F9BEDD"
+   ],
+   "tags": [
+    "dreamy",
+    "playful",
+    "soft",
+    "youthful"
+   ]
+  },
+  {
+   "id": "figma-39",
+   "name": "Electric kiwi",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-39-electric-kiwi",
+   "colours": [
+    "#CCFF00",
+    "#FFFF00",
+    "#DFFF00",
+    "#000000"
+   ],
+   "tags": [
+    "energetic",
+    "bold",
+    "sporty"
+   ]
+  },
+  {
+   "id": "figma-40",
+   "name": "Watermelon splash",
+   "source": "figma",
+   "group": "playful",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-40-watermelon-splash",
+   "colours": [
+    "#FC6C85",
+    "#89F336",
+    "#4A4A4A",
+    "#ADEBB3"
+   ],
+   "tags": [
+    "energetic",
+    "playful",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-41",
+   "name": "Alchemical reaction",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-41-alchemical-reaction",
+   "colours": [
+    "#9D00FF",
+    "#DE811D",
+    "#6BFF00",
+    "#5B8040"
+   ],
+   "tags": [
+    "futuristic",
+    "bold",
+    "technical"
+   ]
+  },
+  {
+   "id": "figma-42",
+   "name": "Electropop",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-42-electropop",
+   "colours": [
+    "#CCFF00",
+    "#FF6B00",
+    "#F900FF",
+    "#5200FF"
+   ],
+   "tags": [
+    "bold",
+    "energetic",
+    "nocturnal",
+    "futuristic"
+   ]
+  },
+  {
+   "id": "figma-43",
+   "name": "Cool revival",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-43-cool-revival",
+   "colours": [
+    "#00FFFF",
+    "#00AEFF",
+    "#00DE94",
+    "#00FF52"
+   ],
+   "tags": [
+    "fresh",
+    "energetic",
+    "technical"
+   ]
+  },
+  {
+   "id": "figma-44",
+   "name": "Neon jungle",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-44-neon-jungle",
+   "colours": [
+    "#89F336",
+    "#38A711",
+    "#F23598",
+    "#A835F2"
+   ],
+   "tags": [
+    "bold",
+    "playful",
+    "dramatic"
+   ]
+  },
+  {
+   "id": "figma-45",
+   "name": "Sharp edge",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-45-sharp-edge",
+   "colours": [
+    "#898989",
+    "#D9D9D9",
+    "#FF4D4D",
+    "#4DFFBC"
+   ],
+   "tags": [
+    "urgent",
+    "bold",
+    "technical"
+   ]
+  },
+  {
+   "id": "figma-46",
+   "name": "Electric fusion",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-46-electric-fusion",
+   "colours": [
+    "#00F0FF",
+    "#00FF81",
+    "#FFA900",
+    "#FF6800"
+   ],
+   "tags": [
+    "energetic",
+    "sporty",
+    "bold"
+   ]
+  },
+  {
+   "id": "figma-47",
+   "name": "Fireworks",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-47-fireworks",
+   "colours": [
+    "#ED2100",
+    "#E88A38",
+    "#960016",
+    "#BF00AC"
+   ],
+   "tags": [
+    "dramatic",
+    "festive",
+    "bold"
+   ]
+  },
+  {
+   "id": "figma-48",
+   "name": "Space berries",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-48-space-berries",
+   "colours": [
+    "#FD3DB5",
+    "#FFB8DC",
+    "#FB6A2C",
+    "#8C1946"
+   ],
+   "tags": [
+    "romantic",
+    "bold",
+    "playful"
+   ]
+  },
+  {
+   "id": "figma-49",
+   "name": "Pop art",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-49-pop-art",
+   "colours": [
+    "#00F0FF",
+    "#FF46A2",
+    "#FFFF00",
+    "#EE4B2B"
+   ],
+   "tags": [
+    "bold",
+    "playful",
+    "retro"
+   ]
+  },
+  {
+   "id": "figma-50",
+   "name": "Urban graffiti",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-50-urban-graffiti",
+   "colours": [
+    "#FF2400",
+    "#2CFF05",
+    "#00F0FF",
+    "#5A5A5A"
+   ],
+   "tags": [
+    "bold",
+    "urban",
+    "energetic"
+   ]
+  },
+  {
+   "id": "figma-51",
+   "name": "Neon noir",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-51-neon-noir",
+   "colours": [
+    "#000000",
+    "#2CFF05",
+    "#BF00FF",
+    "#2D2D2D"
+   ],
+   "tags": [
+    "nocturnal",
+    "futuristic",
+    "dramatic",
+    "bold"
+   ]
+  },
+  {
+   "id": "figma-52",
+   "name": "Tropical punch",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-52-tropical-punch",
+   "colours": [
+    "#FF8243",
+    "#FFC0CB",
+    "#FCE883",
+    "#069494"
+   ],
+   "tags": [
+    "tropical",
+    "playful"
+   ]
+  },
+  {
+   "id": "figma-53",
+   "name": "Cobalt sky",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-53-cobalt-sky",
+   "colours": [
+    "#0047AB",
+    "#000080",
+    "#82C8E5",
+    "#6D8196"
+   ],
+   "tags": [
+    "trustworthy",
+    "technical",
+    "serious"
+   ]
+  },
+  {
+   "id": "figma-54",
+   "name": "Technicolor dream",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-54-technicolor-dream",
+   "colours": [
+    "#FF00FF",
+    "#00FFFF",
+    "#CCFF00",
+    "#191970"
+   ],
+   "tags": [
+    "bold",
+    "playful",
+    "futuristic"
+   ]
+  },
+  {
+   "id": "figma-55",
+   "name": "Jewel box",
+   "source": "figma",
+   "group": "vibrant",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-55-jewel-box",
+   "colours": [
+    "#50C878",
+    "#0F52BA",
+    "#9966CC",
+    "#CFB53B"
+   ],
+   "tags": [
+    "luxurious",
+    "dramatic",
+    "elegant"
+   ]
+  },
+  {
+   "id": "figma-56",
+   "name": "Salt and pepper",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-56-salt-and-pepper",
+   "colours": [
+    "#FFFFFF",
+    "#D4D4D4",
+    "#B3B3B3",
+    "#2B2B2B"
+   ],
+   "tags": [
+    "minimal",
+    "serious",
+    "technical"
+   ]
+  },
+  {
+   "id": "figma-57",
+   "name": "Quite clear",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-57-quite-clear",
+   "colours": [
+    "#CBCBCB",
+    "#F2F2F2",
+    "#174D38",
+    "#4D1717"
+   ],
+   "tags": [
+    "serious",
+    "trustworthy",
+    "elegant"
+   ]
+  },
+  {
+   "id": "figma-58",
+   "name": "Gothic noir",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-58-gothic-noir",
+   "colours": [
+    "#000000",
+    "#D1D0D0",
+    "#988686",
+    "#5C4E4E"
+   ],
+   "tags": [
+    "dramatic",
+    "minimal",
+    "nocturnal"
+   ]
+  },
+  {
+   "id": "figma-59",
+   "name": "Yacht club",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-59-yacht-club",
+   "colours": [
+    "#F2F0EF",
+    "#BBBDBC",
+    "#245F73",
+    "#733E24"
+   ],
+   "tags": [
+    "calm",
+    "trustworthy",
+    "natural"
+   ]
+  },
+  {
+   "id": "figma-60",
+   "name": "Quiet luxury",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-60-quiet-luxury",
+   "colours": [
+    "#F7E6CA",
+    "#E8D59E",
+    "#D9BBB0",
+    "#AD9C8E"
+   ],
+   "tags": [
+    "luxurious",
+    "elegant",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-61",
+   "name": "Night sands",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-61-night-sands",
+   "colours": [
+    "#CBBD93",
+    "#FAE8B4",
+    "#80775C",
+    "#574A24"
+   ],
+   "tags": [
+    "earthy",
+    "calm",
+    "organic"
+   ]
+  },
+  {
+   "id": "figma-62",
+   "name": "Harbor haze",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-62-harbor-haze",
+   "colours": [
+    "#909EAE",
+    "#5C8DC5",
+    "#AD9E90",
+    "#736F60"
+   ],
+   "tags": [
+    "calm",
+    "trustworthy",
+    "serious"
+   ]
+  },
+  {
+   "id": "figma-63",
+   "name": "Old photograph",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-63-old-photograph",
+   "colours": [
+    "#FDFBD4",
+    "#D9D7B6",
+    "#878672",
+    "#545333"
+   ],
+   "tags": [
+    "retro",
+    "calm",
+    "elegant"
+   ]
+  },
+  {
+   "id": "figma-64",
+   "name": "Cappuccino",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-64-cappuccino",
+   "colours": [
+    "#D6B588",
+    "#C6C0B9",
+    "#705E46",
+    "#422701"
+   ],
+   "tags": [
+    "cosy",
+    "calm"
+   ]
+  },
+  {
+   "id": "figma-65",
+   "name": "Breakfast tea",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-65-breakfast-tea",
+   "colours": [
+    "#FFD3AC",
+    "#CCBEB1",
+    "#664C36",
+    "#331C08"
+   ],
+   "tags": [
+    "cosy",
+    "friendly"
+   ]
+  },
+  {
+   "id": "figma-66",
+   "name": "Cozy campfire",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-66-cozy-campfire",
+   "colours": [
+    "#895129",
+    "#AD7A32",
+    "#8A6E29",
+    "#660F09"
+   ],
+   "tags": [
+    "cosy",
+    "earthy"
+   ]
+  },
+  {
+   "id": "figma-67",
+   "name": "Stone path",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-67-stone-path",
+   "colours": [
+    "#A49A87",
+    "#A5A58D",
+    "#968F83",
+    "#E8E5DF"
+   ],
+   "tags": [
+    "minimal",
+    "calm",
+    "crafted"
+   ]
+  },
+  {
+   "id": "figma-68",
+   "name": "Desert mirage",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-68-desert-mirage",
+   "colours": [
+    "#C2B280",
+    "#E35336",
+    "#98A869",
+    "#272757"
+   ],
+   "tags": [
+    "earthy",
+    "natural",
+    "calm"
+   ]
+  },
+  {
+   "id": "figma-69",
+   "name": "Honeycomb",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-69-honeycomb",
+   "colours": [
+    "#FFC107",
+    "#F9E076",
+    "#FFFDD0",
+    "#895129"
+   ],
+   "tags": [
+    "artisanal",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-70",
+   "name": "Urban loft",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-70-urban-loft",
+   "colours": [
+    "#9C9A9A",
+    "#A35E47",
+    "#000000",
+    "#464646"
+   ],
+   "tags": [
+    "industrial",
+    "minimal",
+    "urban"
+   ]
+  },
+  {
+   "id": "figma-71",
+   "name": "Spiced mocha",
+   "source": "figma",
+   "group": "neutral",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-71-spiced-mocha",
+   "colours": [
+    "#6F4E37",
+    "#D47E30",
+    "#F5F5DC",
+    "#6D3B07"
+   ],
+   "tags": [
+    "cosy",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-72",
+   "name": "Charming seaside",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-72-charming-seaside",
+   "colours": [
+    "#B3EBF2",
+    "#85D1DB",
+    "#B6F2D1",
+    "#C9FDF2"
+   ],
+   "tags": [
+    "fresh",
+    "calm",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-73",
+   "name": "Calm blue",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-73-calm-blue",
+   "colours": [
+    "#90D5FF",
+    "#57B9FF",
+    "#77B1D4",
+    "#517891"
+   ],
+   "tags": [
+    "calm",
+    "trustworthy"
+   ]
+  },
+  {
+   "id": "figma-74",
+   "name": "Beachfront views",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-74-beachfront-views",
+   "colours": [
+    "#EDE8D0",
+    "#6E632E",
+    "#DBD1ED",
+    "#ABBEED"
+   ],
+   "tags": [
+    "calm",
+    "creative",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-75",
+   "name": "Under the moonlight",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-75-under-the-moonlight",
+   "colours": [
+    "#CCCCFF",
+    "#A3A3CC",
+    "#5C5C99",
+    "#292966"
+   ],
+   "tags": [
+    "nocturnal",
+    "calm",
+    "dreamy"
+   ]
+  },
+  {
+   "id": "figma-76",
+   "name": "Lavender lullaby",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-76-lavender-lullaby",
+   "colours": [
+    "#B5C7EB",
+    "#9EF0FF",
+    "#A4A5F5",
+    "#8E70CF"
+   ],
+   "tags": [
+    "calm",
+    "dreamy",
+    "nocturnal"
+   ]
+  },
+  {
+   "id": "figma-77",
+   "name": "Minty fresh",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-77-minty-fresh",
+   "colours": [
+    "#98FBCB",
+    "#BFFFED",
+    "#7FCFA8",
+    "#558B71"
+   ],
+   "tags": [
+    "fresh",
+    "calm",
+    "clinical"
+   ]
+  },
+  {
+   "id": "figma-78",
+   "name": "Retro calm",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-50-retro-calm",
+   "colours": [
+    "#81D8D0",
+    "#D99E82",
+    "#D7D982",
+    "#AE82D9"
+   ],
+   "tags": [
+    "retro",
+    "crafted",
+    "playful"
+   ]
+  },
+  {
+   "id": "figma-79",
+   "name": "Siltstone",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-79-siltstone",
+   "colours": [
+    "#CBBD93",
+    "#FFF5B8",
+    "#FFB16E",
+    "#CCA25A"
+   ],
+   "tags": [
+    "friendly",
+    "calm"
+   ]
+  },
+  {
+   "id": "figma-80",
+   "name": "Emerald odyssey",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-80-emerald-odyssey",
+   "colours": [
+    "#00674F",
+    "#73E6CB",
+    "#3EBB9E",
+    "#0A3C30"
+   ],
+   "tags": [
+    "natural",
+    "calm",
+    "fresh"
+   ]
+  },
+  {
+   "id": "figma-81",
+   "name": "Ocean tide",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-81-ocean-tide",
+   "colours": [
+    "#00D1D1",
+    "#4052D6",
+    "#00ADAD",
+    "#005C5C"
+   ],
+   "tags": [
+    "calm",
+    "fresh"
+   ]
+  },
+  {
+   "id": "figma-82",
+   "name": "Peach skyline",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-82-peach-skyline",
+   "colours": [
+    "#FFDBBB",
+    "#BADDFF",
+    "#BAFFF5",
+    "#496580"
+   ],
+   "tags": [
+    "friendly",
+    "calm",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-83",
+   "name": "Mountain mist",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-83-mountain-mist",
+   "colours": [
+    "#6D8196",
+    "#B0C4DE",
+    "#01796F",
+    "#5A5A5A"
+   ],
+   "tags": [
+    "calm",
+    "natural",
+    "serious"
+   ]
+  },
+  {
+   "id": "figma-84",
+   "name": "Morning dew",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-84-morning-dew",
+   "colours": [
+    "#AFEEEE",
+    "#ADEBB3",
+    "#C4C4C4",
+    "#D3D3D3"
+   ],
+   "tags": [
+    "fresh",
+    "calm",
+    "clinical",
+    "soft"
+   ]
+  },
+  {
+   "id": "figma-85",
+   "name": "Frozen lake",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-85-frozen-lake",
+   "colours": [
+    "#6D8196",
+    "#ADD8E6",
+    "#FFFAFA",
+    "#000080"
+   ],
+   "tags": [
+    "minimal",
+    "serious",
+    "trustworthy"
+   ]
+  },
+  {
+   "id": "figma-86",
+   "name": "Olive grove",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-86-olive-grove",
+   "colours": [
+    "#808000",
+    "#228B22",
+    "#636B2F",
+    "#F2F0EF"
+   ],
+   "tags": [
+    "natural",
+    "organic",
+    "earthy"
+   ]
+  },
+  {
+   "id": "figma-87",
+   "name": "Coastal morning",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-87-coastal-morning",
+   "colours": [
+    "#93C572",
+    "#89CFF0",
+    "#F5F5DC",
+    "#82C8E5"
+   ],
+   "tags": [
+    "calm",
+    "fresh",
+    "natural"
+   ]
+  },
+  {
+   "id": "figma-88",
+   "name": "Eucalyptus grove",
+   "source": "figma",
+   "group": "tranquil",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-88-eucalyptus-grove",
+   "colours": [
+    "#B2AC88",
+    "#898989",
+    "#F2F0EF",
+    "#4B6E48"
+   ],
+   "tags": [
+    "calm",
+    "natural",
+    "minimal"
+   ]
+  },
+  {
+   "id": "figma-89",
+   "name": "Soft spring",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-89-soft-spring",
+   "colours": [
+    "#6395EE",
+    "#90B8D6",
+    "#88CFA8",
+    "#85DECB"
+   ],
+   "tags": [
+    "calm",
+    "trustworthy",
+    "fresh"
+   ]
+  },
+  {
+   "id": "figma-90",
+   "name": "Autumn leaves",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-90-autumn-leaves",
+   "colours": [
+    "#FFB343",
+    "#DB9A39",
+    "#B37E2E",
+    "#614419"
+   ],
+   "tags": [
+    "cosy",
+    "seasonal"
+   ]
+  },
+  {
+   "id": "figma-91",
+   "name": "Winter chill",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-91-winter-chill",
+   "colours": [
+    "#B8E3E9",
+    "#93B1B5",
+    "#4F7C82",
+    "#0B2E33"
+   ],
+   "tags": [
+    "calm",
+    "minimal"
+   ]
+  },
+  {
+   "id": "figma-92",
+   "name": "Spring energy",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-92-spring-energy",
+   "colours": [
+    "#89F336",
+    "#FFFC30",
+    "#4FE0CB",
+    "#00BF33"
+   ],
+   "tags": [
+    "energetic",
+    "fresh",
+    "youthful"
+   ]
+  },
+  {
+   "id": "figma-93",
+   "name": "Pumpkin spice season",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-93-pumpkin-spice-season",
+   "colours": [
+    "#BE5103",
+    "#8C4C1F",
+    "#544823",
+    "#332216"
+   ],
+   "tags": [
+    "cosy",
+    "earthy",
+    "seasonal"
+   ]
+  },
+  {
+   "id": "figma-94",
+   "name": "Island oasis",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-94-island-oasis",
+   "colours": [
+    "#CCFF00",
+    "#FFF37E",
+    "#9DE05A",
+    "#FFAE25"
+   ],
+   "tags": [
+    "tropical",
+    "energetic",
+    "fresh"
+   ]
+  },
+  {
+   "id": "figma-95",
+   "name": "Autumn orchard",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-95-autumn-orchard",
+   "colours": [
+    "#8E4585",
+    "#DAA520",
+    "#2E6F40",
+    "#660033"
+   ],
+   "tags": [
+    "earthy",
+    "appetising"
+   ]
+  },
+  {
+   "id": "figma-96",
+   "name": "Tropical rainforest",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-96-tropical-rainforest",
+   "colours": [
+    "#50C878",
+    "#7E8C54",
+    "#4F7942",
+    "#71AA34"
+   ],
+   "tags": [
+    "natural",
+    "fresh",
+    "organic"
+   ]
+  },
+  {
+   "id": "figma-97",
+   "name": "Wildflower meadow",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-97-wildflower-meadow",
+   "colours": [
+    "#FBF9E7",
+    "#FDB813",
+    "#82C8E5",
+    "#7CFC00"
+   ],
+   "tags": [
+    "cheerful",
+    "playful",
+    "youthful"
+   ]
+  },
+  {
+   "id": "figma-98",
+   "name": "Harvest moon",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-98-harvest-moon",
+   "colours": [
+    "#800020",
+    "#FFCE1B",
+    "#A52A2A",
+    "#BE5103"
+   ],
+   "tags": [
+    "cosy",
+    "appetising",
+    "seasonal"
+   ]
+  },
+  {
+   "id": "figma-99",
+   "name": "Winter berry",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-99-winter-berry",
+   "colours": [
+    "#8E0A1E",
+    "#2E6F40",
+    "#ADD8E6",
+    "#FFFFFF"
+   ],
+   "tags": [
+    "festive",
+    "dramatic",
+    "seasonal"
+   ]
+  },
+  {
+   "id": "figma-100",
+   "name": "Summer breeze",
+   "source": "figma",
+   "group": "seasonal",
+   "url": "https://www.figma.com/resource-library/color-combinations/#combination-100-summer-breeze",
+   "colours": [
+    "#FFEB3B",
+    "#F88379",
+    "#82C8E5",
+    "#E6D8C4"
+   ],
+   "tags": [
+    "cheerful",
+    "playful"
+   ]
+  },
+  {
+   "id": "hd-terminal-amber",
+   "name": "Terminal amber",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "dev tools at night: phosphor amber and a cyan cursor on warm charcoal",
+   "colours": [
+    "#15110C",
+    "#241E18",
+    "#F5AE39",
+    "#49B8B8"
+   ],
+   "tags": [
+    "technical",
+    "nocturnal",
+    "warm",
+    "crafted"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-oxide",
+   "name": "Oxide",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "infrastructure: rust on blue-black steel with bone labels",
+   "colours": [
+    "#091018",
+    "#E16A3E",
+    "#8FA9BC",
+    "#EBE4D6"
+   ],
+   "tags": [
+    "technical",
+    "serious",
+    "industrial",
+    "nocturnal"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-diff-ledger",
+   "name": "Diff ledger",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "code review and data tools in daylight: additions green, removals magenta, on clean paper",
+   "colours": [
+    "#F7F7F1",
+    "#101F13",
+    "#0A7E3A",
+    "#B53989"
+   ],
+   "tags": [
+    "technical",
+    "serious",
+    "crafted"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-paper-signal",
+   "name": "Paper and signal",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "an AI product that refuses the violet glow: warm paper, vermilion signal, deep teal",
+   "colours": [
+    "#FAF2E6",
+    "#1F160F",
+    "#DA4620",
+    "#006266"
+   ],
+   "tags": [
+    "technical",
+    "friendly",
+    "crafted",
+    "warm"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-vault",
+   "name": "Vault",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "banking: navy ink and deep green money with a brass highlight",
+   "colours": [
+    "#F1F6FA",
+    "#0C1A32",
+    "#006641",
+    "#D4AB4F"
+   ],
+   "tags": [
+    "trustworthy",
+    "serious",
+    "elegant"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-bourse",
+   "name": "Bourse",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "trading and analytics, dark: cyan data, amber alerts, bone text",
+   "colours": [
+    "#0B151C",
+    "#43CAE7",
+    "#EDB345",
+    "#ECE8DD"
+   ],
+   "tags": [
+    "technical",
+    "serious",
+    "nocturnal",
+    "urgent"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-clinic",
+   "name": "Clinic",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "clinical software: clean cool ground, teal for action, coral for warmth",
+   "colours": [
+    "#F6FBFC",
+    "#092531",
+    "#008282",
+    "#E68677"
+   ],
+   "tags": [
+    "clinical",
+    "calm",
+    "trustworthy"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-care",
+   "name": "Care",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "patient-facing health: warm ground, steady blue-green, apricot",
+   "colours": [
+    "#FCF4EB",
+    "#006A77",
+    "#F4B581",
+    "#11242D"
+   ],
+   "tags": [
+    "calm",
+    "friendly",
+    "trustworthy",
+    "soft"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-civic",
+   "name": "Civic",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "government and public services: plain, dark blue links, signal-yellow focus",
+   "colours": [
+    "#F9F8F5",
+    "#13161B",
+    "#224A8D",
+    "#F6D653"
+   ],
+   "tags": [
+    "serious",
+    "trustworthy",
+    "minimal"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-counsel",
+   "name": "Counsel",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "legal and advisory: ivory, oxblood, slate",
+   "colours": [
+    "#F6F1E7",
+    "#231814",
+    "#7B252B",
+    "#546673"
+   ],
+   "tags": [
+    "serious",
+    "elegant",
+    "luxurious"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-grid",
+   "name": "Grid",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "energy and climate: solar orange, deep green, on daylight",
+   "colours": [
+    "#FAF8F3",
+    "#F7A224",
+    "#185B37",
+    "#131D17"
+   ],
+   "tags": [
+    "fresh",
+    "natural",
+    "energetic"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-wire",
+   "name": "Wire",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "news and media: newsroom white, signal red-orange, deep blue",
+   "colours": [
+    "#F8FAFD",
+    "#0C1014",
+    "#E5481E",
+    "#18386E"
+   ],
+   "tags": [
+    "serious",
+    "urgent",
+    "bold"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-console",
+   "name": "Console",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "B2B software that is not blue: teal action, orange attention, butter highlight",
+   "colours": [
+    "#FDF9F7",
+    "#1E1711",
+    "#007B66",
+    "#E48233"
+   ],
+   "tags": [
+    "technical",
+    "friendly",
+    "calm"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-mint-condition",
+   "name": "Mint condition",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "crypto and wallets, dark without neon: mint and coral on green-black",
+   "colours": [
+    "#09120E",
+    "#7AE7BA",
+    "#F47C6B",
+    "#E9F1ED"
+   ],
+   "tags": [
+    "futuristic",
+    "nocturnal",
+    "fresh"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-underwriter",
+   "name": "Underwriter",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "insurance: warm white, deep teal, marigold",
+   "colours": [
+    "#FFF6F3",
+    "#005763",
+    "#EDB345",
+    "#081E24"
+   ],
+   "tags": [
+    "trustworthy",
+    "friendly",
+    "calm"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-lab-notebook",
+   "name": "Lab notebook",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "science and data tools: graph-paper ground, vermilion marks, graph blue",
+   "colours": [
+    "#F8F5EA",
+    "#122032",
+    "#D15227",
+    "#7DA4C0"
+   ],
+   "tags": [
+    "technical",
+    "crafted",
+    "serious"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-night-editor",
+   "name": "Night editor",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "creative tools after dark: coral, lilac and lime on warm black",
+   "colours": [
+    "#1A1514",
+    "#F66D67",
+    "#B7A0E4",
+    "#BEEA63"
+   ],
+   "tags": [
+    "creative",
+    "nocturnal",
+    "playful",
+    "bold"
+   ],
+   "grade": "inference"
+  },
+  {
+   "id": "hd-workbench",
+   "name": "Workbench",
+   "source": "human-design",
+   "group": "domain gap",
+   "purpose": "developer tools by day: warm paper, signal red-orange, deep green",
+   "colours": [
+    "#F8F2EB",
+    "#151B24",
+    "#D44F13",
+    "#1F634A"
+   ],
+   "tags": [
+    "technical",
+    "crafted",
+    "warm"
+   ],
+   "grade": "inference"
+  }
+ ]
+}
