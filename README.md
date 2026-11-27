@@ -2,11 +2,13 @@
 
 An agent skill for designing and building interfaces that look made by a person for this product, not generated. It covers marketing sites, web apps, desktop apps, iOS and Android apps and online stores, and works in Claude Code, Codex and any agent that reads `SKILL.md`.
 
-**This repository is private.** The skill is intended for sale under a proprietary license (see [LICENSE](LICENSE)). Don't make the repository public, publish it to a plugin marketplace, or put its contents in a free skill.
+**This repository is private.** The skill is sold on Agensi under a proprietary license (see [LICENSE](LICENSE)). Don't make the repository public, publish it to a plugin marketplace, or put its contents in a free skill.
 
 | | |
 | --- | --- |
-| Listing | not yet published |
+| Listing | [Human Design: UI That Doesn't Look AI-Made](https://www.agensi.io/skills/human-design-ui-that-doesn-t-look-ai-made) |
+| Price | $9.99 one-time |
+| Version | 1.1 submitted 27 November 2026 (in review); 1.0 live until it is approved |
 | Category | Frontend & Web Apps |
 | Companions | `smooth-ux` (free; the interaction-state pass this skill builds on), `seo` |
 
@@ -55,15 +57,19 @@ python3 scripts/contrast_check.py --css tokens.css
 python3 -m unittest discover -s tests
 ```
 
-## Building the sale ZIP
+## Release a new version to Agensi
 
-Commit first, then build from the committed files (this leaves out `evals/`, `tests/`, this README and any `__pycache__`):
+1. Keep `SKILL.md`'s `description` at 1,024 characters or fewer (Agensi's limit; it is 1,022 now) and keep dated facts dated ("checked <date>").
+2. Run the tests, commit and push. Then build the ZIP from the committed files (this leaves out `evals/`, `tests/`, `plans/`, this README and any `__pycache__`):
 
-```bash
-rm -rf dist && mkdir -p dist/human-design
-git archive HEAD SKILL.md LICENSE references scripts assets | tar -x -C dist/human-design
-(cd dist && zip -qr human-design-skill.zip human-design)
-```
+   ```bash
+   rm -rf dist && mkdir -p dist/human-design
+   git archive HEAD SKILL.md LICENSE references scripts assets | tar -x -C dist/human-design
+   (cd dist && zip -qr human-design-skill.zip human-design)
+   ```
+
+3. In Agensi, Creator Studio, open the listing's editor (the pencil on its card), open **Replace Skill ZIP**, and upload `dist/human-design-skill.zip`. Agensi fills fields from the ZIP's frontmatter: check that the name, summary and full description are still yours. Set the version (one higher than the current) and write the changelog.
+4. **Save & Resubmit for Review**. Agensi then offers its paid tools (decline unless you want them) and asks for a final review of auto-filled fields, permissions and price. A new ZIP goes through a security scan and review (24 to 48 hours) while the previous version stays live; text, price and image changes go live at once, and a changelog can be edited later without review.
 
 ## Installing locally
 
