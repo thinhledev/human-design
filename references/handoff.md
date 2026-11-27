@@ -14,6 +14,7 @@ python3 scripts/tokens.py design.json --swift Tokens.swift --kotlin Tokens.kt
 ```
 
 - Edit `design.json`, regenerate, commit both. Never hand-edit generated files.
+- Images: sized WebP or AVIF with `srcset`, `width` and `height`, eager and `fetchpriority="high"` for the first screen's main image, lazy elsewhere (`imagery.md` section 4). Scroll motion stays in CSS (`scroll-motion.md`); a framework's motion component must keep the content in the server HTML and visible before hydration.
 - Components use roles (`--bg`, `--surface`, `--text`, `--text-muted`, `--accent`, `--second`, `--highlight`, `--border`, `--good` and the other status roles), never ramp steps or literal colours. Charts use `--chart-1` to `--chart-6` in order. Ramps exist for rare one-offs.
 - Type uses the scale tokens with their own line height and tracking. No `text-[13px]`.
 - Spacing, radius, shadow and motion use their tokens. A value not in the scale is a design decision: add it to design.json or use the scale.

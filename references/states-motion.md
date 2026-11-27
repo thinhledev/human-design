@@ -81,7 +81,7 @@ makes a design look more generated, not less.
 - Animate `transform` and `opacity` only. Width, height, top, left, margin and `background-position` cause layout or repaint every frame.
 - Name the properties; never `transition: all`.
 - Enter with ease-out, exit faster than enter, never bounce or overshoot on interface chrome.
-- One orchestrated moment per screen at most (a page-load sequence, a hero demonstration). Not a fade-up on every section: a page must be complete at rest, with nothing waiting at `opacity: 0` for a scroll observer.
+- One orchestrated moment per screen at most (a page-load sequence, a hero demonstration, a scroll scene on a landing page). Not the same fade-up on every section. Content in view is visible at rest, and nothing waits at `opacity: 0` for a script; marketing pages follow `scroll-motion.md`.
 - No count-up numbers, typewriter headlines or endless ambient loops. A spinner and a skeleton sweep are the only endless animations that earn their place.
 - **Reduced motion**: under `prefers-reduced-motion: reduce`, remove movement (transforms, slides, parallax, auto-play) and keep meaning (a spinner becomes a slow opacity pulse). `render_check.py` counts animations that keep running.
 - Performance beats motion. If an animation could cost a frame on a slow phone, leave it out.
@@ -95,8 +95,8 @@ and easing everywhere.
 Transitions for state changes that move an element, `@starting-style` with
 `transition-behavior: allow-discrete` for entering from `display: none`,
 `linear()` easing for a spring where the platform calls for one,
-scroll-driven animations only as a progressive enhancement and never for
-content visibility. Native: use the platform's own springs and transitions
+scroll-driven animations as a progressive enhancement, with every hidden start
+state inside the reduced-motion and `@supports` guards (`scroll-motion.md`). Native: use the platform's own springs and transitions
 (Material 3 motion scheme; SwiftUI's defaults) before custom curves.
 
 ## 5. Native and desktop
@@ -112,4 +112,4 @@ content visibility. Native: use the platform's own springs and transitions
 - Busy is distinct from disabled; done and failed are designed.
 - Each action follows the treatment table; failures say what happened and what state things are in.
 - Motion uses the tokens, only transform and opacity, with a reduced-motion path.
-- Nothing on the page is invisible until scrolled to.
+- Nothing in the first screen starts invisible; nothing in view is invisible at rest; nothing is hidden without scripts or under reduced motion (`render_check.py --motion`).

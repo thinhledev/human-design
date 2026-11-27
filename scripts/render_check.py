@@ -22,6 +22,18 @@ agent eyes and a ruler: for each width and colour scheme it saves a screenshot
   motion    animations that keep running under prefers-reduced-motion
   the fold  what the first screen shows: largest text, number of controls
 
+--motion (for marketing pages with scroll motion; references/scroll-motion.md)
+loads the page once more and checks that motion costs nothing a visitor or a
+search engine would notice: LCP and its element (and whether that element was
+waiting for an animation or lazy-loaded), layout shift, long tasks, text in
+the first screen that is invisible at load, a slow scroll through the page
+checking that whatever sits fully in view is visible once scrolling stops
+(saving frames at several positions to look at), nothing hidden under
+reduced motion, nothing hidden or missing with JavaScript off, nothing hidden
+in a tall viewport like a crawler that does not scroll, and smooth-scroll or
+render-blocking motion libraries. Timings from a local file are a floor, not a
+field measurement.
+
 --squint adds a blurred greyscale screenshot of the first two screens: if the
 hierarchy is not obvious there, it is not obvious. --fold captures only the
 first screen. Tall pages are saved as several screenshots of about 1600px
@@ -431,6 +443,197 @@ def capture(cdp, session, url, width, scheme, a, out_dir, stem):
     return facts
 
 
+# ----------------------------------------------------------------- scroll motion (--motion)
+OBSERVE = r"""
+window.__hdPerf = {lcp: [], cls: 0, shifts: 0, long: 0, longN: 0, hiddenFirst: null};
+try { new PerformanceObserver(l => { for (const e of l.getEntries()) { const el = e.element;
+  window.__hdPerf.lcp.push({t: Math.round(e.startTime), size: e.size, tag: el ? el.tagName.toLowerCase() : '',
+    text: el ? (el.innerText || el.alt || el.currentSrc || '').trim().slice(0, 60) : '', lazy: !!(el && el.loading === 'lazy')}); } })
+  .observe({type: 'largest-contentful-paint', buffered: true}); } catch (e) {}
+try { new PerformanceObserver(l => { for (const e of l.getEntries()) if (!e.hadRecentInput) { window.__hdPerf.cls += e.value; window.__hdPerf.shifts++; } })
+  .observe({type: 'layout-shift', buffered: true}); } catch (e) {}
+try { new PerformanceObserver(l => { for (const e of l.getEntries()) { window.__hdPerf.long += Math.max(0, e.duration - 50); window.__hdPerf.longN++; } })
+  .observe({type: 'longtask', buffered: true}); } catch (e) {}
+window.__hdText = (scope) => {
+  const out = {hidden: 0, chars: 0, hiddenChars: 0, samples: []};
+  const skip = new Set(['SCRIPT', 'STYLE', 'NOSCRIPT', 'TEMPLATE', 'SVG', 'svg']);
+  const H = innerHeight, W = innerWidth;
+  const eff = el => { let o = 1; for (let n = el; n && n.nodeType === 1; n = n.parentElement) { const s = getComputedStyle(n);
+      if (s.visibility === 'hidden' || s.display === 'none') return -1; o *= parseFloat(s.opacity); } return o; };
+  for (const el of document.body ? document.body.querySelectorAll('*') : []) {
+    if (skip.has(el.tagName) || el.closest('svg,[aria-hidden="true"],dialog:not([open]),details:not([open])')) continue;
+    let own = ''; for (const c of el.childNodes) if (c.nodeType === 3) own += c.textContent;
+    own = own.trim(); if (own.length < 2) continue;
+    const r = el.getBoundingClientRect(); if (r.width < 2 || r.height < 2) continue;
+    if (scope === 'first' && (r.bottom <= 0 || r.top >= H)) continue;
+    if (scope === 'inview' && (r.top < 0 || r.bottom > H || r.left < 0 || r.right > W)) continue;
+    const o = eff(el); if (o < 0) continue;
+    out.chars += own.length;
+    if (o < 0.05) { out.hidden++; out.hiddenChars += own.length; if (out.samples.length < 4) out.samples.push(own.slice(0, 50)); }
+  }
+  return out; };
+document.addEventListener('DOMContentLoaded', () => setTimeout(() => { try { window.__hdPerf.hiddenFirst = window.__hdText('first'); } catch (e) {} }, 50));
+"""
+
+LIBS = r"""
+(() => { const srcs = [...document.scripts].map(s => (s.src || '') + ' ' + (s.src ? '' : s.textContent.slice(0, 4000)));
+  const all = srcs.join(' ').toLowerCase(); const h = document.documentElement.className + ' ' + document.body.className;
+  const libs = []; const add = (n, ok) => { if (ok && !libs.includes(n)) libs.push(n); };
+  add('lenis', /lenis/.test(all) || /\blenis\b/.test(h) || !!window.Lenis); add('locomotive-scroll', /locomotive/.test(all) || !!window.LocomotiveScroll);
+  add('smooth-scrollbar', /smooth-scrollbar/.test(all)); add('fullpage.js', /fullpage/.test(all) || !!window.fullpage_api);
+  add('gsap', !!window.gsap || /gsap/.test(all)); add('ScrollTrigger', !!window.ScrollTrigger || /scrolltrigger/.test(all));
+  add('aos', !!window.AOS || /\baos(\.min)?\.js/.test(all)); add('framer-motion', /framer-motion|motion\/react/.test(all));
+  const blocking = [...document.querySelectorAll('head script[src]')].filter(s => !s.async && !s.defer && s.type !== 'module')
+    .map(s => s.src.split('/').pop()).filter(n => /gsap|scrolltrigger|lenis|locomotive|aos|motion|anime|scrollreveal|lottie/i.test(n));
+  const css = [...document.styleSheets].some(sh => { try { return [...sh.cssRules].some(r => /animation-timeline|view-timeline|scroll-timeline/.test(r.cssText)); } catch (e) { return false; } });
+  return JSON.stringify({libs, blocking, scrollTimelines: css, pageHeight: document.documentElement.scrollHeight}); })()
+"""
+
+
+def _eval(cdp, session, expr, timeout=30):
+    r = cdp.call("Runtime.evaluate", {"expression": expr, "returnByValue": True, "awaitPromise": True}, session, timeout=timeout)
+    return r.get("result", {}).get("value")
+
+
+def _load(cdp, session, url, a, width, height, motion="no-preference", scheme="light"):
+    cdp.call("Emulation.setDeviceMetricsOverride", {"width": width, "height": height, "deviceScaleFactor": 1, "mobile": width <= 600}, session)
+    cdp.call("Emulation.setEmulatedMedia", {"features": [{"name": "prefers-color-scheme", "value": scheme},
+                                                          {"name": "prefers-reduced-motion", "value": motion}]}, session)
+    cdp.events.clear()
+    cdp.call("Page.navigate", {"url": url}, session)
+    cdp.wait_event("Page.loadEventFired", session, timeout=a.timeout)
+    time.sleep(max(0.3, a.wait / 1000))
+
+
+def motion_check(cdp, session, url, width, a, out_dir, stem):
+    """Measure what scroll motion costs: see OBSERVE and the --motion note in the module docstring."""
+    height = 844 if width <= 600 else 900
+    m = {"width": width, "frames": []}
+    script = cdp.call("Page.addScriptToEvaluateOnNewDocument", {"source": OBSERVE}, session)["identifier"]
+    try:
+        _load(cdp, session, url, a, width, height)
+        m.update(json.loads(_eval(cdp, session, LIBS)))
+        m["atLoad"] = _eval(cdp, session, "window.__hdText('all')")
+        page_h = int(m.get("pageHeight") or height)
+        m["stuck"] = scroll_through(cdp, session, height, page_h, "window.__hdText('inview')",
+                                    (out_dir, f"{stem}-{width}", m["frames"]) if out_dir else None)
+        m["perf"] = _eval(cdp, session, "JSON.parse(JSON.stringify(window.__hdPerf))")
+        # reduced motion: nothing anywhere may be waiting to appear
+        _load(cdp, session, url, a, width, height, motion="reduce")
+        m["reduced"] = _eval(cdp, session, "window.__hdText('all')")
+        # a tall viewport: a crawler that does not scroll sees the page this way (vh units grow with it, so judge
+        # only what sits fully in that viewport)
+        _load(cdp, session, url, a, 1280, min(max(page_h, 900), 16000))
+        m["tall"] = _eval(cdp, session, "window.__hdText('inview')")
+        # JavaScript off: the words must already be in the HTML, and visible
+        cdp.call("Emulation.setScriptExecutionDisabled", {"value": True}, session)
+        try:
+            cdp.call("Page.removeScriptToEvaluateOnNewDocument", {"identifier": script}, session)
+            script = None
+            _load(cdp, session, url, a, width, height)
+            counter = _nojs_counter()
+            m["noJs"] = _eval(cdp, session, f"({counter})('all')")
+            m["noJsStuck"] = scroll_through(cdp, session, height, int(_eval(cdp, session, "document.documentElement.scrollHeight") or height),
+                                            f"({counter})('inview')", None)
+        finally:
+            cdp.call("Emulation.setScriptExecutionDisabled", {"value": False}, session)
+    finally:
+        if script:
+            cdp.call("Page.removeScriptToEvaluateOnNewDocument", {"identifier": script}, session)
+    return m
+
+
+def _nojs_counter():
+    """Page scripts are off, but Runtime.evaluate still runs: the text counter as an expression."""
+    return OBSERVE.split("window.__hdText = ", 1)[1].split("document.addEventListener('DOMContentLoaded'", 1)[0].strip().rstrip(";")
+
+
+def scroll_through(cdp, session, height, page_h, counter, frames):
+    """Scroll down in half-screen steps. At each stop, whatever sits fully in view must be visible once scrolling stops.
+    frames: (out_dir, stem, list) to save viewport screenshots at about 0, 25, 50 and 75% of the page, or None."""
+    stuck, step = [], max(200, int(height * 0.5))
+    marks = [round(page_h * f) for f in (0.0, 0.25, 0.5, 0.75)] if frames else []
+    y, stops = 0, 0
+    while y < page_h and stops < 60:
+        _eval(cdp, session, f"window.scrollTo(0, {y})")
+        time.sleep(0.45)
+        t = _eval(cdp, session, counter) or {}
+        if t.get("hidden"):
+            stuck.append({"y": y, "count": t["hidden"], "samples": t["samples"]})
+        if frames and marks and abs(y - marks[0]) < step / 2 + 1:
+            marks.pop(0)
+            png = cdp.call("Page.captureScreenshot", {"format": "png"}, session, timeout=60)
+            path = os.path.join(frames[0], f"{frames[1]}-scroll-{len(frames[2]) + 1}.png")
+            with open(path, "wb") as fh:
+                fh.write(base64.b64decode(png["data"]))
+            frames[2].append(path)
+        y += step
+        stops += 1
+    return stuck
+
+
+def motion_findings(m):
+    out = []
+    perf = m.get("perf") or {}
+    lcp = (perf.get("lcp") or [{}])[-1] if perf.get("lcp") else None
+    first = perf.get("hiddenFirst") or {}
+    if first.get("hidden"):
+        out.append(("error", f"{first['hidden']} text elements in the first screen were invisible when the page loaded (for example "
+                             f"\"{first['samples'][0]}\"). The first screen must be complete at the first paint: LCP waits for hidden text, "
+                             "and so does a visitor. Animate decorative layers on load, or animate text from visible."))
+    if lcp:
+        note = f"LCP {lcp['t']} ms on <{lcp['tag']}> \"{lcp['text']}\""
+        if lcp.get("lazy"):
+            out.append(("error", note + ", which is loading=\"lazy\". The largest image of the first screen loads eagerly, with "
+                                        "fetchpriority=\"high\"."))
+        elif lcp["t"] > 2500:
+            out.append(("warn", note + ". Over 2.5 s even from a local file: something (an animation, a script, a large image) holds it back."))
+        else:
+            out.append(("info", note + " (a local file: field values will be higher)."))
+    cls = perf.get("cls", 0)
+    if cls >= 0.1:
+        out.append(("error", f"Layout shift {cls:.3f} during load and scroll (poor at 0.1 or more). Reserve space; animate transform, not size or position."))
+    elif cls >= 0.05:
+        out.append(("warn", f"Layout shift {cls:.3f} during load and scroll; aim under 0.05 so the field value stays under 0.1."))
+    if perf.get("long", 0) > 150:
+        out.append(("warn", f"{perf['longN']} long tasks, {round(perf['long'])} ms of blocking during load and scroll. Motion should run on "
+                            "the compositor (CSS scroll-driven animations), not in scroll handlers."))
+    for st in (m.get("stuck") or [])[:3]:
+        out.append(("error", f"At scroll position {st['y']}px, {st['count']} text elements fully in view were still invisible after the "
+                             f"scroll stopped (\"{st['samples'][0]}\"). Content in view must be visible at rest."))
+    if m.get("reduced", {}).get("hidden"):
+        r = m["reduced"]
+        out.append(("error", f"Under prefers-reduced-motion, {r['hidden']} text elements start invisible (\"{r['samples'][0]}\"). Put every "
+                             "hidden start state inside @media (prefers-reduced-motion: no-preference)."))
+    if m.get("tall", {}).get("hidden"):
+        t = m["tall"]
+        out.append(("error", f"In a tall viewport (how a crawler that does not scroll renders the page), {t['hidden']} text elements stay "
+                             f"invisible (\"{t['samples'][0]}\"). Reveals must not depend on scrolling."))
+    nj = m.get("noJs") or {}
+    njs = m.get("noJsStuck") or []
+    if njs:
+        out.append(("error", f"With JavaScript off, {sum(x['count'] for x in njs)} text elements stay invisible in view while scrolling "
+                             f"(\"{njs[0]['samples'][0]}\"): the hidden start state is in CSS but the reveal is in a script. Gate the start "
+                             "state on a class the script sets, or use CSS scroll timelines."))
+    js_chars = (m.get("atLoad") or {}).get("chars", 0)
+    if nj and js_chars > nj.get("chars", 0) * 1.05 + 200:
+        out.append(("warn", f"{js_chars - nj.get('chars', 0)} characters of text exist only after JavaScript runs. Put the words in the HTML; "
+                            "motion may move content, never create it."))
+    hijack = [x for x in m.get("libs", []) if x in ("lenis", "locomotive-scroll", "smooth-scrollbar", "fullpage.js")]
+    if hijack:
+        out.append(("warn", f"Scroll is taken over by {', '.join(hijack)}. Native scrolling keeps keyboard, find-in-page, anchor links and "
+                            "the platform's feel; keep it unless the owner chose otherwise (record \"smooth-scroll\" under deliberate)."))
+    if m.get("blocking"):
+        out.append(("warn", f"Motion scripts block rendering in <head>: {', '.join(m['blocking'])}. Load them with defer or type=module."))
+    lib = [x for x in m.get("libs", []) if x not in hijack]
+    out.append(("info", ("Scroll timelines in CSS: yes. " if m.get("scrollTimelines") else "Scroll timelines in CSS: none. ") +
+                ("Motion libraries: " + ", ".join(lib) + "." if lib else "No motion library.")))
+    if m.get("frames"):
+        out.append(("look", "Scroll frames: " + ", ".join(f"`{p}`" for p in m["frames"]) + ". Open them: is each in-between state "
+                            "intended, and is the motion telling the subject's story?"))
+    return out
+
+
 def luminance(hexv: str) -> float:
     h = hexv.lstrip("#")
     if len(h) != 6:
@@ -582,6 +785,7 @@ def main(argv=None):
     ap.add_argument("--timeout", type=float, default=20.0, help="seconds to wait for the page to load")
     ap.add_argument("--chrome", help="path to Chrome, Chromium or Edge when it is not in a standard location")
     ap.add_argument("--identity", help="design.json; its \"deliberate\" table can declare \"small-text\" (default: a design.json next to the file)")
+    ap.add_argument("--motion", action="store_true", help="also check scroll motion for speed, layout shift and SEO (first width only)")
     ap.add_argument("--json", action="store_true")
     a = ap.parse_args(argv)
     ident = a.identity
@@ -614,6 +818,10 @@ def main(argv=None):
         for width in [int(w) for w in a.widths.split(",") if w.strip()]:
             for scheme in [s.strip() for s in a.schemes.split(",") if s.strip()]:
                 results.append(capture(cdp, session, url, width, scheme, a, a.out, stem))
+        motion = None
+        if a.motion:
+            first_w = [int(w) for w in a.widths.split(",") if w.strip()][0]
+            motion = motion_check(cdp, session, url, first_w, a, a.out, stem)
         cdp.close()
     finally:
         proc.terminate()
@@ -627,6 +835,10 @@ def main(argv=None):
         for f in results:
             f["findings"] = findings(f, deliberate)
             worst = max([worst] + [2 for s, _ in f["findings"] if s == "error"])
+        if motion:
+            motion["findings"] = motion_findings(motion)
+            worst = max([worst] + [2 for s, _ in motion["findings"] if s == "error"])
+            results.append({"motion": motion})
         print(json.dumps(results, indent=1))
         return worst
     print(f"# Render check: {a.target}\n")
@@ -634,6 +846,12 @@ def main(argv=None):
         fs = findings(f, deliberate)
         worst = max([worst] + [2 for s, _ in fs if s == "error"])
         print(render(f, fs) + "\n")
+    if motion:
+        mf = motion_findings(motion)
+        worst = max([worst] + [2 for s, _ in mf if s == "error"])
+        rank = {"error": 0, "warn": 1, "look": 2, "info": 3}
+        print(f"## Scroll motion, {motion['width']}px\n")
+        print("\n".join(f"- **{sev}** {msg}" for sev, msg in sorted(mf, key=lambda x: rank[x[0]])) + "\n")
     print("Measured facts only. Open each screenshot and run the critique in references/critique.md: hierarchy, rhythm, "
           "alignment and character are judged by eye.")
     return worst

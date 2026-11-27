@@ -566,10 +566,66 @@ def _(d):
     return removed[:5] if removed and not replaced else []
 
 
-@tell("dead-fade-up-everything", "dead", "weak", "Everything fades or slides up on scroll", "A page is complete at rest. Animate one moment that matters, not every block.")
+@tell("dead-fade-up-everything", "dead", "weak", "Everything fades or slides up on scroll, the same way",
+      "The same reveal on every block reads generated. Choreograph by role: one scene that tells the subject's story, quieter "
+      "entrances elsewhere, CSS scroll timelines with the content visible at rest (references/scroll-motion.md).")
 def _(d):
     hits = d.find(r"whileInView=|data-aos=|\bIntersectionObserver\b|initial=\{\{\s*opacity:\s*0,\s*y:\s*\d+|animate-fade-in-up|animate-in fade-in|fade-up|reveal-on-scroll")
     return hits[:5] if len(hits) >= 5 else []
+
+
+REVEAL_SEL = re.compile(r"reveal|fade|appear|aos|in-?view|on-?scroll|animate|enter|rise|slide-?in|stagger", re.I)
+GUARD = re.compile(r"prefers-reduced-motion:\s*no-preference|animation-timeline|view-timeline|scroll-timeline", re.I)
+
+
+@tell("motion-hidden-start", "dead", "strong", "Content starts invisible with no guard (opacity 0 waiting for a reveal)",
+      "Keep content visible by default. Put the hidden start state inside @media (prefers-reduced-motion: no-preference) and "
+      "@supports (animation-timeline: view()), or in the keyframes' from, so no-JS, reduced motion, crawlers and the first paint "
+      "all see the content (references/scroll-motion.md).")
+def _(d):
+    hits = []
+    for src, sel, prop, val, line, at in d.decls:
+        if prop == "opacity" and re.fullmatch(r"0(\.0+)?", val.strip()) and REVEAL_SEL.search(sel) and not GUARD.search(at or "") \
+                and "keyframes" not in (at or "").lower() and not re.search(r"(^|[\s,])(html)?\.(js|motion|has-js|motion-ok)\b", sel):
+            hits.append((src.path, line, f"{sel} {{ opacity: {val} }}"))
+    hits += d.find(r"initial=\{\{\s*opacity:\s*0", limit=4)
+    return hits[:5]
+
+
+@tell("motion-scroll-hijack", "dead", "weak", "Scrolling is taken over by a smooth-scroll library (Lenis, Locomotive, fullPage)",
+      "Native scrolling keeps keyboard, find-in-page, anchor links and the platform's own feel, and costs no script. Use scroll "
+      "timelines for the effects; if the owner wants smooth scrolling, record \"smooth-scroll\" under deliberate.")
+def _(d):
+    return d.find(r"from\s+[\"'](?:@studio-freight/|)lenis|new\s+Lenis\(|locomotive-scroll|LocomotiveScroll|fullpage(?:\.js|\.min\.js|_api)|smooth-scrollbar")[:3]
+
+
+@tell("motion-scroll-handler", "dead", "weak", "Motion driven from scroll event handlers",
+      "Scroll handlers run on the main thread on every frame and cost responsiveness. Drive scroll effects with CSS "
+      "animation-timeline: scroll() or view(); if a script must listen, pass { passive: true } and only toggle a class.")
+def _(d):
+    hits = d.find(r"addEventListener\(\s*[\"']scroll[\"']\s*,[^)]*\)(?![^\n]*passive)|window\.onscroll\s*=|\$\(window\)\.scroll\(", exts={".js", ".ts", ".jsx", ".tsx", ".html", ".vue", ".svelte", ".astro"})
+    return [h for h in hits if "passive" not in h[2]][:3]
+
+
+@tell("image-drawn-art", "default", "weak", "Pictures of the subject drawn by hand in SVG where a photograph would do",
+      "Hand-drawn stand-ins (loaves, plants, people, devices) read as filler. Use the owner's photographs, or real photographs "
+      "from a free library (Pexels, Unsplash, open museum collections), credited in DESIGN.md (references/imagery.md).")
+def _(d):
+    if d.surface not in ("marketing", "store"):
+        return []
+    photos = d.find(r"<img[^>]+src=[\"'][^\"']+\.(?:jpe?g|webp|avif|png)|<source[^>]+srcset=|images\.(?:pexels|unsplash)\.com|background-image:\s*url\(", limit=1)
+    if photos:
+        return []
+    drawn = []
+    for src in d.markup:
+        for m in re.finditer(r"<svg\b(.*?)</svg>", src.text, re.S | re.I):
+            body = m.group(1)
+            shapes = len(re.findall(r"<(path|circle|ellipse|polygon|rect|line|polyline)\b", body, re.I))
+            vb = re.search(r"viewBox=[\"']\s*[-\d.]+[\s,]+[-\d.]+[\s,]+([\d.]+)[\s,]+([\d.]+)", body)
+            big = vb and max(float(vb.group(1)), float(vb.group(2))) > 32  # icons are drawn on a 16 to 32 unit grid
+            if (big and shapes >= 2) or shapes >= 8:
+                drawn.append((src.path, src.line_of(m.start()), "<svg> artwork"))
+    return drawn[:4] if len(drawn) >= 3 else []
 
 
 @tell("dead-hover-scale", "dead", "weak", "Cards that grow on hover", "Hover should confirm that something is clickable (colour, underline, a small shift), not move the layout.")

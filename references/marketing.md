@@ -61,15 +61,15 @@ that do not.
 ## 5. Imagery
 
 - Real product screens, at a size where they can be read, cropped to the part that matters. Not a full dashboard shrunk to a thumbnail.
-- Real photography of the real people, place or object. Stock photos of "diverse team at laptop" read as filler; so do generated images of the same.
-- Illustration only with a point of view (a hand, a style that belongs to the brand). If there is no illustrator, do not imitate one: use type, product and photography.
-- No images yet: draw honest placeholders labelled with what goes there and its aspect ratio, and say so in the hand-off.
+- Real photography of the real people, place or object: the owner's first, then a free library (Pexels, Unsplash, open museum collections), searched with the world study's words and credited in DESIGN.md (`imagery.md`). Stock photos of "diverse team at laptop" read as filler; so do generated images of the same.
+- Never draw the subject by hand in SVG or CSS as a stand-in for a photograph (an SVG loaf, a cartoon plant): it reads as low quality (`slop_check.py` tell `image-drawn-art`). Illustration only with a point of view and an illustrator; draw only diagrams, charts, icons and the product's interface.
+- No photograph found and none supplied: an honest placeholder labelled with what goes there and its aspect ratio, said in the hand-off.
 - Every image has width and height (or `aspect-ratio`) and an `alt` that says what it shows.
 
 ## 6. Interaction
 
 - Visible hover, focus and pressed states on every link and button (`states-motion.md`).
-- At most one orchestrated moment (a load sequence, a demonstration). The page is complete at rest: nothing fades in on scroll.
+- Scroll motion is welcome on a landing page when it tells the subject's story: one scene scrubbed by scroll, quieter entrances below the fold, a hero whose picture settles on load. It must cost nothing: first screen complete at the first paint, everything visible without scripts or with reduced motion, compositor-only, CSS scroll timelines before any library (`scroll-motion.md`; check with `render_check.py --motion`).
 - Forms: one column, labels above fields, no placeholder as label (research: nngroup.com/articles/web-form-design/; single-column forms were completed 15.4s faster in a CXL study, n=702).
 - Cookie banners: accept, reject and manage offered equally, as a small overlay; no trick toggles (research: nngroup.com/articles/cookie-permissions/). Hiding "reject" is a dark pattern and unlawful in the EU.
 

@@ -403,5 +403,59 @@ class TrialFixes(unittest.TestCase):
         self.assertNotIn("--dur-character", tokens.css_vars(tokens.build(spec)))
 
 
+MOTION_BAD = """<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Bad</title><style>
+body{margin:0;font:18px/1.5 Georgia,serif}.reveal{opacity:0;transform:translateY(40px);transition:opacity .8s,transform .8s}.reveal.in{opacity:1;transform:none}
+section{min-height:90vh;padding:40px}</style></head><body><section><h1 class="reveal">Fresh bread every Saturday</h1></section>
+<section><h2 class="reveal">The loaves</h2><p class="reveal">Country loaf, seeded rye and spelt with honey.</p></section>
+<script>setTimeout(()=>{const io=new IntersectionObserver(es=>es.forEach(e=>{if(e.isIntersecting)e.target.classList.add('in')}));
+document.querySelectorAll('.reveal').forEach(el=>io.observe(el))},1500);</script></body></html>"""
+
+MOTION_GOOD = """<!doctype html><html lang="en"><head><meta charset="utf-8"><title>Good</title><style>
+body{margin:0;font:18px/1.5 Georgia,serif}section{min-height:90vh;padding:40px}
+@keyframes rise{from{opacity:0;transform:translateY(32px)}}
+@media (prefers-reduced-motion:no-preference){@supports (animation-timeline:view()){
+.reveal{animation:rise linear both;animation-timeline:view();animation-range:entry 5% cover 30%}}}
+</style></head><body><section><h1>Fresh bread every Saturday</h1></section>
+<section><h2 class="reveal">The loaves</h2><p class="reveal">Country loaf, seeded rye and spelt with honey.</p></section></body></html>"""
+
+
+class MotionAndImagery(unittest.TestCase):
+    """Scroll motion that costs no speed or SEO, and real pictures before drawn ones (27 November 2026)."""
+
+    def write(self, name, text):
+        tmp = tempfile.mkdtemp()
+        path = os.path.join(tmp, name)
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write(text)
+        return path
+
+    def test_static_tells(self):
+        _code, out = run(slop_check, [self.write("bad.html", MOTION_BAD), "--surface", "marketing"])
+        self.assertIn("motion-hidden-start", out)
+        _code, out = run(slop_check, [self.write("good.html", MOTION_GOOD), "--surface", "marketing"])
+        self.assertNotIn("motion-hidden-start", out)
+        lenis = self.write("app.js", "import Lenis from 'lenis'\nconst l = new Lenis()\nwindow.addEventListener('scroll', () => move())\n")
+        _code, out = run(slop_check, [lenis])
+        self.assertIn("motion-scroll-hijack", out)
+        self.assertIn("motion-scroll-handler", out)
+        loaf = '<svg viewBox="0 0 64 48"><ellipse cx="32" cy="24" rx="28" ry="18"/><path d="M10 20 Q32 4 54 20"/></svg>'
+        drawn = self.write("index.html", "<!doctype html><title>Bakery</title><main>" + loaf * 4 + "</main>")
+        _code, out = run(slop_check, [drawn, "--surface", "marketing"])
+        self.assertIn("image-drawn-art", out)
+        photo = self.write("index.html", '<!doctype html><title>Bakery</title><main><img src="loaf.webp" alt="A loaf">' + loaf * 4 + "</main>")
+        _code, out = run(slop_check, [photo, "--surface", "marketing"])
+        self.assertNotIn("image-drawn-art", out)
+
+    @unittest.skipUnless(render_check.find_chrome(), "no Chrome, Chromium or Edge")
+    def test_motion_render(self):
+        code, out = run(render_check, [self.write("bad.html", MOTION_BAD), "--widths", "1280", "--motion"])
+        self.assertEqual(code, 2)
+        for phrase in ("first screen were invisible", "prefers-reduced-motion", "tall viewport", "JavaScript off"):
+            self.assertIn(phrase, out)
+        code, out = run(render_check, [self.write("good.html", MOTION_GOOD), "--widths", "1280", "--motion"])
+        self.assertEqual(code, 0, out)
+        self.assertIn("Scroll timelines in CSS: yes", out)
+
+
 if __name__ == "__main__":
     unittest.main()

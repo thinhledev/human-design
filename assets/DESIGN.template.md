@@ -70,6 +70,18 @@ error, partial. Motion tokens and rules: see `design.json` "motion".
 | Face | Source | Licence | Files or link |
 | --- | --- | --- | --- |
 
+## Pictures and licences
+
+Real photographs, never hand-drawn stand-ins (references/imagery.md).
+
+| File | Shows | Source page | Photographer | Licence | Downloaded | Changes |
+| --- | --- | --- | --- | --- | --- | --- |
+| | | | | | | |
+
+## Scroll motion (marketing pages)
+
+<The one scene and what in the subject it shows; the quieter entrances; what moves on load (decorative layers only). Checked with render_check.py --motion on DATE.>
+
 ## Directions considered
 
 | Direction | Bet | Why rejected or chosen |

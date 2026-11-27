@@ -32,7 +32,7 @@ means 30 months later. Re-check anything older than six months.
 | `@property` | typed, animatable custom properties | Jul 2024 | static value |
 | Popover | menus and tooltips in the top layer without JavaScript | Jan 2025 | fine for most audiences |
 | Style queries on custom properties | variants driven by a token | May 2026 | default variant |
-| Scroll-driven animations | progress bars and effects tied to scroll | Oct 2026 | static; never hide content behind them |
+| Scroll-driven animations | scroll scenes, entrances, parallax, progress, off the main thread (`scroll-motion.md`) | Oct 2026 | static page; hidden start states only inside `@supports` |
 | `field-sizing` | inputs and textareas that grow with content | Jun 2026 | fixed size |
 | `sibling-index()`, `sibling-count()` | staggered delays without inline styles | Aug 2026 | no stagger |
 | `shape()` | responsive clip paths | Feb 2026 | rectangular |
@@ -72,6 +72,6 @@ that, not by habit, and record it in DESIGN.md.
 ## Rules
 
 - Write the plain version first, then enhance inside `@supports` or with a fallback declaration before the new one.
-- Content never depends on an enhancement: no element starts hidden waiting for a scroll timeline or a view transition.
+- Content never depends on an enhancement: a hidden start state exists only inside `@supports (animation-timeline: view())` and `prefers-reduced-motion: no-preference`, so browsers without the feature, and reduced motion, show the finished page.
 - Everything animated has a `prefers-reduced-motion` path.
 - Test in the browsers the audience uses, not only the one at hand. `render_check.py` uses Chrome; say so when reporting.

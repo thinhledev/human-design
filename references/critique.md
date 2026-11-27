@@ -71,7 +71,8 @@ DESIGN.md under Taste.
 
 - Does every control have pressed, focus, busy and disabled states? Is there a state sheet?
 - Are loading, empty and error designed for every data view?
-- Is the page complete at rest, with nothing invisible until scrolled to?
+- Is the first screen complete at the first paint, and is everything in view visible once scrolling stops? On a landing page, does the scroll motion tell the subject's story, or is it the same fade on every block? Open the `--motion` scroll frames.
+- Are the pictures real photographs of the subject, or drawn stand-ins?
 - Tab through it: is focus visible and in reading order?
 
 **Phone**
