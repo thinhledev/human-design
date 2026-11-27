@@ -1,18 +1,17 @@
 ---
 name: human-design
 description: >-
-  Design and build interfaces that look made by a person for this product, not generated: marketing
-  sites, web apps, desktop apps, iOS and Android apps, online stores. It derives a design identity
-  from the subject and records it per project (DESIGN.md, design.json, tokens), draws every
-  interaction state so nothing is static, renders the result in headless Chrome to screenshot and
-  measure it, and checks source for AI tells, first and second generation, including SwiftUI and
-  Compose. A fingerprint compares each design with the default looks AI converges on and with the
-  owner's other projects, so two products never look alike. Use it for any UI or UX
-  work: a new page, screen, component, landing page, dashboard, app or store; a redesign; "this
-  looks like AI", "AI slop", "too generic", "all my projects look the same", "make it feel
-  designed", "the colours are dull"; palettes and colour combinations that fit a business domain;
-  design systems and tokens; typography, colour, layout, dark mode; mockups; a design review. Use it
-  before writing UI code, even when the user only says "build a page".
+  Design and build interfaces that look made by a person for the product, not generated: marketing
+  sites, web apps, desktop and mobile apps, online stores. It derives a design identity from the
+  subject and records it in the repository, picks colour as a set that fits the business domain, draws
+  every interaction state, renders the result in headless Chrome to screenshot and measure it
+  (including scroll motion, for speed and SEO), and checks source for AI tells, web and native. A
+  fingerprint compares each design with the looks AI converges on and with the owner's other projects,
+  so no two products look alike. Use it for any UI or UX work: a page, screen, component, landing
+  page, dashboard, app or store; a redesign; "this looks like AI", "too generic", "all my projects
+  look the same", "the colours are dull", "make the landing page wow"; palettes, design systems and
+  tokens, typography, layout, dark mode, imagery; mockups; a design review. Use it before writing UI
+  code, even when the user only says "build a page".
 license: Proprietary, see LICENSE
 compatibility: Scripts need Python 3.8+ (standard library only). render_check.py needs Chrome, Chromium or Edge and talks only to that local browser. No other network access.
 metadata:
