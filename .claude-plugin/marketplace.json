@@ -1,0 +1,16 @@
+{
+  "name": "human-design",
+  "description": "Human Design: a skill that makes interfaces look made by a person for the product, not generated.",
+  "owner": {
+    "name": "Thinh Le",
+    "url": "https://github.com/thinhledev"
+  },
+  "plugins": [
+    {
+      "name": "human-design",
+      "source": "./",
+      "description": "Interfaces that look made by a person for the product, not generated: a design identity per project, colour that fits the business domain, every interaction state, real photographs, scroll motion that costs no speed or SEO, and Chrome renders that measure the result. Sites, web apps, desktop, iOS, Android and stores.",
+      "category": "development"
+    }
+  ]
+}

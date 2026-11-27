@@ -1,14 +1,30 @@
-human-design skill
-Copyright (c) 2026 Thinh Le. All rights reserved.
+Human Design skill licence
+Copyright (c) 2026 Thinh Le
 
-This skill (SKILL.md, the references and the scripts) is licensed to the person or
-company that purchased it, for use in their own projects and in work they do for
-their own clients. You may modify it for that use.
+Free to use. At no cost, you may:
 
-You may not resell, sublicense, share, publish or redistribute it, in whole or in
-part, or in modified form, including in other skills, plugins, templates or
-marketplaces.
+- install and use this skill (SKILL.md, the references, the scripts, the data
+  and the assets) with any AI agent, for personal and commercial work,
+  including work you do for clients;
+- modify it for your own use or your organisation's own use;
+- use, sell and publish what you make with it (designs, code, pages, apps).
+  Those results are yours.
 
-It is provided "as is", without warranty of any kind. Platforms, browsers and design conventions
-change; the facts in references/sources.md are dated and should be re-checked
-before being relied on. Nothing in it is legal advice; check the licence of every font, icon and image you ship.
+No resale and no republishing. Without written permission from the author,
+you may not:
+
+- sell, sublicense or rent the skill, or a modified version of it;
+- publish or redistribute the skill, or a modified version of it, in whole or
+  in substantial part, as a skill, plugin, template, course or any other
+  package, in a marketplace, directory or repository, whether free or paid.
+  Link to an official listing instead.
+
+Official listings: the GitHub repository thinhledev/human-design, the Claude
+plugin directory and Agensi.
+
+The skill is provided "as is", without warranty of any kind. In no event is
+the author liable for any claim, damages or other liability arising from its
+use. Platforms, browsers and design conventions change: the facts in
+references/sources.md are dated and should be re-checked before being relied
+on. Nothing in it is legal advice; check the licence of every font, icon and
+image you ship.

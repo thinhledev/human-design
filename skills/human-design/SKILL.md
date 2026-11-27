@@ -12,11 +12,11 @@ description: >-
   look the same", "the colours are dull", "make the landing page wow"; palettes, design systems and
   tokens, typography, layout, dark mode, imagery; mockups; a design review. Use it before writing UI
   code, even when the user only says "build a page".
-license: Proprietary, see LICENSE
+license: Free to use, no resale; see LICENSE
 compatibility: Scripts need Python 3.8+ (standard library only). render_check.py needs Chrome, Chromium or Edge and talks only to that local browser. No other network access.
 metadata:
   author: Thinh Le
-  version: "1.0"
+  version: "1.1"
 ---
 
 # Human design

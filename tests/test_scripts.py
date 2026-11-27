@@ -10,7 +10,8 @@ import tempfile
 import unittest
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-sys.path.insert(0, os.path.join(HERE, "..", "scripts"))
+SKILL = os.path.join(HERE, "..", "skills", "human-design")
+sys.path.insert(0, os.path.join(SKILL, "scripts"))
 import contrast_check, design_lib as d, fingerprint, palette, render_check, slop_check, tokens  # noqa: E402,E401
 
 SLOP = """<!doctype html><html lang="en"><head><title>Vite + React</title><style>
@@ -270,7 +271,7 @@ class Colour(unittest.TestCase):
         for dm in domains.values():
             for cid in dm["candidates"]:
                 self.assertIn(cid, combos, (dm["id"], cid))
-        text = open(os.path.join(HERE, "..", "references", "data", "domains.json"), encoding="utf-8").read()
+        text = open(os.path.join(SKILL, "references", "data", "domains.json"), encoding="utf-8").read()
         self.assertNotIn("\u2014", text)  # no em dashes in written content
 
     def test_harmony_names(self):
